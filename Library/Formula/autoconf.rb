@@ -37,4 +37,3 @@ __END__
 +my $libtoolize = $ENV{'LIBTOOLIZE'} || 'glibtoolize';
  my $autopoint  = $ENV{'AUTOPOINT'}  || 'autopoint';
  my $make       = $ENV{'MAKE'}       || 'make';
- 
