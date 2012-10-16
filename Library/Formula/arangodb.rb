@@ -2,8 +2,8 @@ require 'formula'
 
 class Arangodb < Formula
   homepage 'http://www.arangodb.org/'
-  url "https://github.com/triAGENS/ArangoDB/zipball/v1.0.beta1"
-  sha1 '36b280accbe049c509814f1ab8a28837fb0239c2'
+  url 'https://github.com/triAGENS/ArangoDB/zipball/v1.0.1'
+  sha1 'f4c196ec8f160be2f830bafffcf5a6756731802f'
 
   head "https://github.com/triAGENS/ArangoDB.git"
 
@@ -24,9 +24,6 @@ class Arangodb < Formula
 
     (var+'arangodb').mkpath
     (var+'log/arangodb').mkpath
-
-    plist_path.write startup_plist
-    plist_path.chmod 0644
   end
 
   def caveats; <<-EOS.undent
