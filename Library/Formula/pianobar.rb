@@ -11,9 +11,8 @@ class Pianobar < Formula
   depends_on 'mad'
   depends_on 'faad2'
   depends_on 'gnutls'
+  depends_on 'libgcrypt'
   depends_on 'json-c'
-
-  skip_clean 'bin'
 
   fails_with :llvm do
     build 2334
