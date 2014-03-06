@@ -2,15 +2,27 @@ require 'formula'
 
 class GoogleAppEngine < Formula
   homepage 'https://developers.google.com/appengine/'
-  url 'http://googleappengine.googlecode.com/files/google_appengine_1.7.2.zip'
-  sha1 '519b914a41f1b323315c5f71ce9302f8ac6e044e'
+  url 'https://commondatastorage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.0.zip'
+  sha1 '923a7f99e058d93408d3940e0307bdf2769b7480'
 
   def install
     cd '..'
     share.install 'google_appengine' => name
     bin.mkpath
     %w[
-      api_server.py appcfg.py bulkloader.py bulkload_client.py dev_appserver.py download_appstats.py remote_api_shell.py
+      _python_runtime.py
+      _php_runtime.py
+      api_server.py
+      appcfg.py
+      bulkload_client.py
+      bulkloader.py
+      dev_appserver.py
+      download_appstats.py
+      endpointscfg.py
+      gen_protorpc.py
+      google_sql.py
+      old_dev_appserver.py
+      remote_api_shell.py
     ].each do |fn|
       ln_s share+name+fn, bin
     end

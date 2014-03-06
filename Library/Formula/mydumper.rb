@@ -1,9 +1,9 @@
 require 'formula'
 
 class Mydumper < Formula
-  homepage 'http://www.mydumper.org/'
-  url 'http://launchpadlibrarian.net/77098505/mydumper-0.5.1.tar.gz'
-  sha1 '75635b9c25ca878bfe7907efd136aa4229161d72'
+  homepage 'https://launchpad.net/mydumper'
+  url 'https://launchpad.net/mydumper/0.5/0.5.2/+download/mydumper-0.5.2.tar.gz'
+  sha1 '1eb1a341635c252f9f4cf611af544e0c94b1687d'
 
   depends_on 'pkg-config' => :build
   depends_on 'cmake' => :build
@@ -16,7 +16,7 @@ class Mydumper < Formula
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/mydumper", "--version"
   end
 end

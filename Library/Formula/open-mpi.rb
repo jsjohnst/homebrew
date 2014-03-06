@@ -2,40 +2,45 @@ require 'formula'
 
 class OpenMpi < Formula
   homepage 'http://www.open-mpi.org/'
-  url 'http://www.open-mpi.org/software/ompi/v1.6/downloads/openmpi-1.6.2.tar.bz2'
-  sha1 '694fd3bac911cdb22f77175884d819b6fea871df'
-
-  # Reported upstream at version 1.6, both issues
-  # http://www.open-mpi.org/community/lists/devel/2012/05/11003.php
-  # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php
-  fails_with :clang do
-    build 421
-    cause 'fails make check on Lion and ML'
-  end
+  url 'http://www.open-mpi.org/software/ompi/v1.7/downloads/openmpi-1.7.4.tar.bz2'
+  sha1 '1e3bf2b6cebfdd3571a2f25bba9aa61aed4bbe85'
 
   option 'disable-fortran', 'Do not build the Fortran bindings'
-  option 'test', 'Verify the build with make check'
+  option 'enable-mpi-thread-multiple', 'Enable MPI_THREAD_MULTIPLE'
+  option :cxx11
+
+  conflicts_with 'mpich2', :because => 'both install mpi__ compiler wrappers'
+  conflicts_with 'lcdf-typetools', :because => 'both install same set of binaries.'
+
+  depends_on :fortran unless build.include? 'disable-fortran'
+  depends_on 'libevent'
 
   def install
+    ENV.cxx11 if build.cxx11?
+
     args = %W[
       --prefix=#{prefix}
       --disable-dependency-tracking
+      --disable-silent-rules
       --enable-ipv6
+      --with-libevent=#{Formula["libevent"].opt_prefix}
     ]
     if build.include? 'disable-fortran'
       args << '--disable-mpi-f77' << '--disable-mpi-f90'
-    else
-      ENV.fortran
+    end
+
+    if build.include? 'enable-mpi-thread-multiple'
+      args << '--enable-mpi-thread-multiple'
     end
 
     system './configure', *args
-    system 'make all'
-    system 'make check' if build.include? 'test'
-    system 'make install'
+    system 'make', 'all'
+    system 'make', 'check'
+    system 'make', 'install'
 
     # If Fortran bindings were built, there will be a stray `.mod` file
     # (Fortran header) in `lib` that needs to be moved to `include`.
-    include.install lib/'mpi.mod' if File.exists? "#{lib}/mpi.mod"
+    include.install lib/'mpi.mod' if File.exist? "#{lib}/mpi.mod"
 
     # Not sure why the wrapped script has a jar extension - adamv
     libexec.install bin/'vtsetup.jar'

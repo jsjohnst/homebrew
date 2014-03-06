@@ -2,8 +2,15 @@ require 'formula'
 
 class Zsh < Formula
   homepage 'http://www.zsh.org/'
-  url 'http://www.zsh.org/pub/zsh-5.0.0.tar.bz2'
-  sha1 '692669243433c55384a54b397a1cc926e582e9f2'
+  url 'https://downloads.sourceforge.net/project/zsh/zsh/5.0.5/zsh-5.0.5.tar.bz2'
+  mirror 'http://www.zsh.org/pub/zsh-5.0.5.tar.bz2'
+  sha1 '75426146bce45ee176d9d50b32f1ced78418ae16'
+
+  bottle do
+    sha1 "d8d7ba4016377561d5d823a30abff7c81fee1577" => :mavericks
+    sha1 "34fbefd6275edb7ee9fcc8d0ce3da4438ca412b1" => :mountain_lion
+    sha1 "63a53240287c1f11204217176aab8246eab4d43c" => :lion
+  end
 
   depends_on 'gdbm'
   depends_on 'pcre'
@@ -25,7 +32,11 @@ class Zsh < Formula
       --with-tcsetpgrp
     ]
 
-    args << '--disable-etcdir' if build.include? 'disable-etcdir'
+    if build.include? 'disable-etcdir'
+      args << '--disable-etcdir'
+    else
+      args << '--enable-etcdir=/etc'
+    end
 
     system "./configure", *args
 
@@ -33,24 +44,19 @@ class Zsh < Formula
     inreplace ["Makefile", "Src/Makefile"],
       "$(libdir)/$(tzsh)/$(VERSION)", "$(libdir)"
 
-    system "make install"
+    system "make", "install"
+    system "make", "install.info"
   end
 
-  def test
+  test do
     system "#{bin}/zsh", "--version"
   end
 
   def caveats; <<-EOS.undent
-    To use this build of Zsh as your login shell, add it to /etc/shells.
-
-    If you have administrator privileges, you must fix an Apple miss
-    configuration in Mac OS X 10.7 Lion by renaming /etc/zshenv to
-    /etc/zprofile, or Zsh will have the wrong PATH when executed
-    non-interactively by scripts.
-
-    Alternatively, install Zsh with /etc disabled:
-
-      brew install --disable-etcdir zsh
+    Add the following to your zshrc to access the online help:
+      unalias run-help
+      autoload run-help
+      HELPDIR=#{HOMEBREW_PREFIX}/share/zsh/helpfiles
     EOS
   end
 end

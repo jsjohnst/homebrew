@@ -1,10 +1,8 @@
 require 'formula'
 
 class Tmap < Formula
-  homepage 'http://github.com/iontorrent/TMAP'
+  homepage 'https://github.com/iontorrent/TMAP'
   url 'https://github.com/iontorrent/TMAP.git', :tag => 'tmap.3.2.0'
-  sha1 'da3eb4ce3428cec1f5ac12467af4802df6188711'
-  version '3.2.0'
 
   head 'https://github.com/iontorrent/TMAP.git'
 
@@ -15,12 +13,13 @@ class Tmap < Formula
   option 'perf',    'Enable google performance tools for profiling and heap checking'
   option 'nocolor', 'Disable terminal coloring'
 
+  depends_on :autoconf
   depends_on :automake
   depends_on :libtool
   depends_on 'google-perftools' if build.include? 'perf'
 
   fails_with :clang do
-    build 421
+    build 425
     cause 'Missing symbols being discussed in iontorrent/TMAP#3'
   end
 
@@ -41,7 +40,7 @@ class Tmap < Formula
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/tmap", "-v"
   end
 end

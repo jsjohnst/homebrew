@@ -1,64 +1,85 @@
 require 'formula'
 
-class TexInstalled < Requirement
-  def message; <<-EOS.undent
-    A TeX/LaTeX installation is required to install.
-    You can obtain the TeX distribution for Mac OS X from:
-        http://www.tug.org/mactex/
-    After you install it, put its bin in your PATH and open a new Terminal tab.
-    You should also do this because MacTex installs with root ownership:
-        sudo chown -R $USER `brew --prefix`
-    That will change all the files and directories back to being owned by you.
-    EOS
-  end
-  def satisfied?
-    which 'mpost'
-  end
-  def fatal?
-    true
-  end
-end
-
 class Lilypond < Formula
   homepage 'http://lilypond.org/'
-  url 'http://download.linuxaudio.org/lilypond/sources/v2.16/lilypond-2.16.1.tar.gz'
-  sha1 'ce923f27091ec5501df7bcd0596f1ffd7ab9b8b9'
+  url 'http://download.linuxaudio.org/lilypond/sources/v2.18/lilypond-2.18.1.tar.gz'
+  sha1 '2da4b9881c5263179e41370624e6c08cddf23511'
 
-  env :userpaths
+  devel do
+    url 'http://download.linuxaudio.org/lilypond/source/v2.19/lilypond-2.19.3.tar.gz'
+    sha1 '313e64cd7971bf98d84e76dccf31e24cba0d1ab6'
+  end
+
+  # LilyPond currently only builds with an older version of Guile (<1.9)
+  resource 'guile18' do
+    url 'http://ftpmirror.gnu.org/guile/guile-1.8.8.tar.gz'
+    sha1 '548d6927aeda332b117f8fc5e4e82c39a05704f9'
+  end
+
+  env :std
 
   option 'with-doc', "Build documentation in addition to binaries (may require several hours)."
 
-  depends_on TexInstalled.new
+  # Dependencies for LilyPond
+  depends_on :tex
+  depends_on :x11
   depends_on 'pkg-config' => :build
   depends_on 'gettext'
   depends_on 'pango'
-  depends_on 'guile'
   depends_on 'ghostscript'
   depends_on 'mftrace'
-  depends_on 'fontforge'
+  depends_on 'fontforge' => ["with-x", "with-cairo"]
+  depends_on 'fondu'
   depends_on 'texinfo'
-  depends_on :x11
+
+  # Additional dependencies for guile1.8.
+  depends_on :libtool
+  depends_on 'libffi'
+  depends_on 'libunistring'
+  depends_on 'bdw-gc'
+  depends_on 'gmp'
+  depends_on 'readline'
+
+  # Add dependency on keg-only Homebrew 'flex' because Apple bundles an older and incompatible
+  # version of the library with 10.7 at least, seems slow keeping up with updates,
+  # and the extra brew is tiny anyway.
+  depends_on 'flex' => :build
 
   # Assert documentation dependencies if requested.
   if build.include? 'with-doc'
     depends_on 'netpbm'
     depends_on 'imagemagick'
     depends_on 'docbook'
-    depends_on LanguageModuleDependency.new :python, 'dblatex', 'dbtexmf.dblatex'
+    depends_on 'dbtexmf.dblatex' => :python
+    depends_on :python
     depends_on 'texi2html'
   end
 
-  skip_clean :all
-
   fails_with :clang do
-    build 421
     cause 'Strict C99 compliance error in a pointer conversion.'
   end
 
   def install
-    gs = Formula.factory('ghostscript')
-    system "./configure", "--prefix=#{prefix}", "--enable-rpath",
-                          "--with-ncsb-dir=#{gs.share}/ghostscript/fonts/"
+    # The contents of the following block are taken from the guile18 formula
+    # in homebrew/versions.
+    resource('guile18').stage do
+       system "./configure", "--disable-dependency-tracking",
+                             "--prefix=#{prefix}",
+                             "--with-libreadline-prefix=#{Formula["readline"].opt_prefix}"
+       system "make", "install"
+       # A really messed up workaround required on OS X --mkhl
+       lib.cd { Dir["*.dylib"].each {|p| ln_sf p, File.basename(p, ".dylib")+".so" }}
+       ENV.prepend_path 'PATH', "#{bin}"
+    end
+
+    gs = Formula["ghostscript"]
+
+    args = ["--prefix=#{prefix}",
+            "--enable-rpath",
+            "--with-ncsb-dir=#{gs.share}/ghostscript/fonts/"]
+
+    args << "--disable-documentation" unless build.include? 'with-doc'
+    system "./configure", *args
 
     # Separate steps to ensure that lilypond's custom fonts are created.
     system 'make all'
@@ -71,15 +92,11 @@ class Lilypond < Formula
     end
   end
 
-  def test
-    mktemp do
-      (Pathname.pwd+'test.ly').write <<-EOS.undent
-        \\version "2.16.0"
-        \\header { title = "Do-Re-Mi" }
-        { c' d' e' }
-      EOS
-      lilykeg = Formula.factory('lilypond').linked_keg
-      system "#{lilykeg}/bin/lilypond test.ly"
-    end
+  test do
+    (testpath/'test.ly').write <<-EOS.undent
+      \\header { title = "Do-Re-Mi" }
+      { c' d' e' }
+    EOS
+    system "#{bin}/lilypond", "test.ly"
   end
 end

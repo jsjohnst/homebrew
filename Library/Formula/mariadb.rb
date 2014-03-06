@@ -2,8 +2,19 @@ require 'formula'
 
 class Mariadb < Formula
   homepage 'http://mariadb.org/'
-  url 'http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.28/kvm-tarbake-jaunty-x86/mariadb-5.5.28.tar.gz'
-  sha1 '29ec3c64365e73dfda5f9d38c76de681b62a4987'
+  url 'http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.36/kvm-tarbake-jaunty-x86/mariadb-5.5.36.tar.gz'
+  sha1 'a6091356ffe524322431670ad03d68c389243d04'
+
+  bottle do
+    sha1 "46a842d51c95aa8e6463f373e7312d28c2d89192" => :mavericks
+    sha1 "40868bd7621732f92f998e13badc6b46399e3b43" => :mountain_lion
+    sha1 "61b9289369f12ba10edd77e2cbe2d54ab7fb8396" => :lion
+  end
+
+  devel do
+    url 'http://ftp.osuosl.org/pub/mariadb/mariadb-10.0.8/kvm-tarbake-jaunty-x86/mariadb-10.0.8.tar.gz'
+    sha1 '2b56a7d78b5cf063374f8d6cf03986020b0290c1'
+  end
 
   depends_on 'cmake' => :build
   depends_on 'pidof' unless MacOS.version >= :mountain_lion
@@ -11,126 +22,137 @@ class Mariadb < Formula
   option :universal
   option 'with-tests', 'Keep test when installing'
   option 'with-bench', 'Keep benchmark app when installing'
-  option 'client-only', 'Install only client tools'
   option 'with-embedded', 'Build the embedded server'
   option 'with-libedit', 'Compile with editline wrapper instead of readline'
   option 'with-archive-storage-engine', 'Compile with the ARCHIVE storage engine enabled'
   option 'with-blackhole-storage-engine', 'Compile with the BLACKHOLE storage engine enabled'
   option 'enable-local-infile', 'Build with local infile loading support'
 
-  conflicts_with 'mysql',
-    :because => "mariadb and mysql install the same binaries."
-
-  conflicts_with 'percona-server',
-    :because => "mariadb and percona-server install the same binaries."
+  conflicts_with 'mysql', 'mysql-cluster', 'percona-server',
+    :because => "mariadb, mysql, and percona install the same binaries."
+  conflicts_with 'mysql-connector-c',
+    :because => 'both install MySQL client libraries'
 
   env :std if build.universal?
 
-  fails_with :clang do
-    build 421
-  end
-
   def patches
-    # fix build on Xcode only systems
-    DATA
+    if build.devel?
+      [
+        # Prevent name collision leading to compilation failure. See:
+        # issue #24489, upstream: https://mariadb.atlassian.net/browse/MDEV-5314
+        'https://gist.github.com/makigumo/8931768/raw/28ab86eb6d2fc0f400d0acc07d4b5773027ab9d2/mariadb-10.0.8.mac.patch',
+      ]
+    end
   end
 
   def install
+    # Don't hard-code the libtool path. See:
+    # https://github.com/Homebrew/homebrew/issues/20185
+    inreplace "cmake/libutils.cmake",
+      "COMMAND /usr/bin/libtool -static -o ${TARGET_LOCATION}",
+      "COMMAND libtool -static -o ${TARGET_LOCATION}"
+
     # Build without compiler or CPU specific optimization flags to facilitate
     # compilation of gems and other software that queries `mysql-config`.
     ENV.minimal_optimization
 
-    # Make sure the var/mysql directory exists
-    (var+"mysql").mkpath
-
-    cmake_args = %W[
+    # -DINSTALL_* are relative to prefix
+    args = %W[
       .
       -DCMAKE_INSTALL_PREFIX=#{prefix}
+      -DCMAKE_FIND_FRAMEWORK=LAST
+      -DCMAKE_VERBOSE_MAKEFILE=ON
       -DMYSQL_DATADIR=#{var}/mysql
-      -DINSTALL_MANDIR=#{man}
-      -DINSTALL_DOCDIR=#{doc}
-      -DINSTALL_MYSQLSHAREDIR=#{share.basename}/mysql
+      -DINSTALL_INCLUDEDIR=include/mysql
+      -DINSTALL_MANDIR=share/man
+      -DINSTALL_DOCDIR=share/doc/#{name}
+      -DINSTALL_INFODIR=share/info
+      -DINSTALL_MYSQLSHAREDIR=share/mysql
       -DWITH_SSL=yes
       -DDEFAULT_CHARSET=utf8
       -DDEFAULT_COLLATION=utf8_general_ci
       -DINSTALL_SYSCONFDIR=#{etc}
+      -DCOMPILATION_COMMENT=Homebrew
     ]
 
-    # Client only
-    cmake_args << "-DWITHOUT_SERVER=1" if build.include? 'client-only'
+    args << "-DWITH_UNIT_TESTS=OFF" unless build.with? 'tests'
+
+    # oqgraph requires boost, but fails to compile against boost 1.54
+    # Upstream bug: https://mariadb.atlassian.net/browse/MDEV-4795
+    args << "-DWITHOUT_OQGRAPH_STORAGE_ENGINE=1"
 
     # Build the embedded server
-    cmake_args << "-DWITH_EMBEDDED_SERVER=ON" if build.include? 'with-embedded'
+    args << "-DWITH_EMBEDDED_SERVER=ON" if build.with? 'embedded'
 
     # Compile with readline unless libedit is explicitly chosen
-    cmake_args << "-DWITH_READLINE=yes" unless build.include? 'with-libedit'
+    args << "-DWITH_READLINE=yes" unless build.with? 'libedit'
 
     # Compile with ARCHIVE engine enabled if chosen
-    cmake_args << "-DWITH_ARCHIVE_STORAGE_ENGINE=1" if build.include? 'with-archive-storage-engine'
+    args << "-DWITH_ARCHIVE_STORAGE_ENGINE=1" if build.with? 'archive-storage-engine'
 
     # Compile with BLACKHOLE engine enabled if chosen
-    cmake_args << "-DWITH_BLACKHOLE_STORAGE_ENGINE=1" if build.include? 'with-blackhole-storage-engine'
+    args << "-DWITH_BLACKHOLE_STORAGE_ENGINE=1" if build.with? 'blackhole-storage-engine'
 
     # Make universal for binding to universal applications
-    cmake_args << "-DCMAKE_OSX_ARCHITECTURES='i386;x86_64'" if build.universal?
+    args << "-DCMAKE_OSX_ARCHITECTURES='#{Hardware::CPU.universal_archs.as_cmake_arch_flags}'" if build.universal?
 
     # Build with local infile loading support
-    cmake_args << "-DENABLED_LOCAL_INFILE=1" if build.include? 'enable-local-infile'
+    args << "-DENABLED_LOCAL_INFILE=1" if build.include? 'enable-local-infile'
 
-    system "cmake", *cmake_args
+    system "cmake", *args
     system "make"
     system "make install"
 
-    # Don't create databases inside of the prefix!
-    # See: https://github.com/mxcl/homebrew/issues/4975
-    rm_rf prefix+'data'
-
-    (prefix+'mysql-test').rmtree unless build.include? 'with-tests' # save 121MB!
-    (prefix+'sql-bench').rmtree unless build.include? 'with-bench'
-
-    # Link the setup script into bin
-    ln_s prefix+'scripts/mysql_install_db', bin+'mysql_install_db'
-
-    # Fix up the control script and link into bin
-    inreplace "#{prefix}/support-files/mysql.server" do |s|
-      s.gsub!(/^(PATH=".*)(")/, "\\1:#{HOMEBREW_PREFIX}/bin\\2")
-      # pidof can be replaced with pgrep from proctools on Mountain Lion
-      s.gsub!(/pidof/, 'pgrep') if MacOS.version >= :mountain_lion
-    end
-
     # Fix my.cnf to point to #{etc} instead of /etc
+    (etc+'my.cnf.d').mkpath
     inreplace "#{etc}/my.cnf" do |s|
       s.gsub!("!includedir /etc/my.cnf.d", "!includedir #{etc}/my.cnf.d")
     end
 
-    ln_s "#{prefix}/support-files/mysql.server", bin
+    unless build.include? 'client-only'
+      # Don't create databases inside of the prefix!
+      # See: https://github.com/Homebrew/homebrew/issues/4975
+      rm_rf prefix+'data'
+
+      (prefix+'mysql-test').rmtree unless build.with? 'tests' # save 121MB!
+      (prefix+'sql-bench').rmtree unless build.with? 'bench'
+
+      # Link the setup script into bin
+      ln_s prefix+'scripts/mysql_install_db', bin+'mysql_install_db'
+
+      # Fix up the control script and link into bin
+      inreplace "#{prefix}/support-files/mysql.server" do |s|
+        s.gsub!(/^(PATH=".*)(")/, "\\1:#{HOMEBREW_PREFIX}/bin\\2")
+        # pidof can be replaced with pgrep from proctools on Mountain Lion
+        s.gsub!(/pidof/, 'pgrep') if MacOS.version >= :mountain_lion
+      end
+
+      ln_s "#{prefix}/support-files/mysql.server", bin
+    end
+  end
+
+  def post_install
+    # Make sure the var/mysql directory exists
+    (var+"mysql").mkpath
+    unless File.exist? "#{var}/mysql/mysql/user.frm"
+      ENV['TMPDIR'] = nil
+      system "#{bin}/mysql_install_db", '--verbose', "--user=#{ENV['USER']}",
+        "--basedir=#{prefix}", "--datadir=#{var}/mysql", "--tmpdir=/tmp"
+    end
   end
 
   def caveats; <<-EOS.undent
-    Set up databases with:
-        unset TMPDIR
-        mysql_install_db --user=\`whoami\` --basedir="$(brew --prefix mariadb)" --datadir=#{var}/mysql --tmpdir=/tmp
+    A "/etc/my.cnf" from another install may interfere with a Homebrew-built
+    server starting up correctly.
 
-    If this is your first install, automatically load on login with:
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
-
-    If this is an upgrade and you already have the #{plist_path.basename} loaded:
-        launchctl unload -w ~/Library/LaunchAgents/#{plist_path.basename}
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
-
-    Note on upgrading:
-        We overwrite any existing #{plist_path.basename} in ~/Library/LaunchAgents
-        if we are upgrading because previous versions of this brew created the
-        plist with a version specific program argument.
-
-    Or start manually with:
-        mysql.server start
+    To connect:
+        mysql -uroot
     EOS
   end
 
-  def startup_plist; <<-EOPLIST.undent
+  plist_options :manual => "mysql.server start"
+
+  def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
@@ -139,31 +161,17 @@ class Mariadb < Formula
       <true/>
       <key>Label</key>
       <string>#{plist_name}</string>
-      <key>Program</key>
-      <string>#{HOMEBREW_PREFIX}/bin/mysqld_safe</string>
+      <key>ProgramArguments</key>
+      <array>
+        <string>#{opt_prefix}/bin/mysqld_safe</string>
+        <string>--bind-address=127.0.0.1</string>
+      </array>
       <key>RunAtLoad</key>
       <true/>
-      <key>UserName</key>
-      <string>#{`whoami`.chomp}</string>
       <key>WorkingDirectory</key>
       <string>#{var}</string>
     </dict>
     </plist>
-    EOPLIST
+    EOS
   end
 end
-
-__END__
-diff --git a/cmake/libutils.cmake b/cmake/libutils.cmake
-index 7c13df0..c82de4d 100644
---- a/cmake/libutils.cmake
-+++ b/cmake/libutils.cmake
-@@ -183,7 +183,7 @@ MACRO(MERGE_STATIC_LIBS TARGET OUTPUT_NAME LIBS_TO_MERGE)
-       # binaries properly)
-       ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
-         COMMAND rm ${TARGET_LOCATION}
--        COMMAND /usr/bin/libtool -static -o ${TARGET_LOCATION} 
-+        COMMAND libtool -static -o ${TARGET_LOCATION} 
-         ${STATIC_LIBS}
-       )  
-     ELSE()

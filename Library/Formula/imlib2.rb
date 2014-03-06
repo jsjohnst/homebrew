@@ -2,8 +2,8 @@ require 'formula'
 
 class Imlib2 < Formula
   homepage 'http://sourceforge.net/projects/enlightenment/files/'
-  url 'http://downloads.sourceforge.net/project/enlightenment/imlib2-src/1.4.5/imlib2-1.4.5.tar.bz2'
-  sha1 'af86a2c38f4bc3806db57e64e74dc9814ad474a0'
+  url 'https://downloads.sourceforge.net/project/enlightenment/imlib2-src/1.4.6/imlib2-1.4.6.tar.bz2'
+  sha1 '20e111d822074593e8d657ecf8aafe504e9e2967'
 
   option "without-x", "Build without X support"
 
@@ -25,11 +25,7 @@ class Imlib2 < Formula
     system "make install"
   end
 
-  def test
-    mktemp do
-      system "#{bin}/imlib2_conv", \
-        "/System/Library/Frameworks/SecurityInterface.framework/Versions/A/Resources/Key_Large.png", \
-        "imlib2_test.jpg"
-    end
+  test do
+    system "#{bin}/imlib2_conv", "/usr/share/doc/cups/images/cups.png", "imlib2_test.png"
   end
 end

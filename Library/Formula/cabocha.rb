@@ -2,10 +2,13 @@ require 'formula'
 
 class Cabocha < Formula
   homepage 'http://code.google.com/p/cabocha/'
-  url 'http://cabocha.googlecode.com/files/cabocha-0.64.tar.gz'
-  sha1 '13f18c4aae2d75f5c7ac69c87458912fc00b4174'
+  url 'http://cabocha.googlecode.com/files/cabocha-0.67.tar.bz2'
+  sha1 '457a9bd0d264a1146a5eb1c5a504dd90a8b51fb8'
 
   depends_on 'crf++'
+  depends_on 'mecab'
+
+  option 'posset', 'choose default posset: IPA, JUMAN, UNIDIC'
 
   def install
     ENV["LIBS"] = '-liconv'
@@ -15,9 +18,13 @@ class Cabocha < Formula
       s.change_make_var! 'CXXFLAGS', ENV.cflags
     end
 
-    system "./configure", "--with-charset=utf8",
-                          "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
+    posset = ARGV.value('posset') || "IPA"
+    args = ["--with-charset=utf8",
+            "--disable-dependency-tracking",
+            "--prefix=#{prefix}"]
+    args << "--with-posset=#{posset}"
+
+    system "./configure", *args
     system "make install"
   end
 end

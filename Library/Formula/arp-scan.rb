@@ -1,7 +1,7 @@
 require 'formula'
 
 class ArpScan < Formula
-  homepage 'http://www.nta-monitor.com/tools/arp-scan/'
+  homepage 'http://www.nta-monitor.com/tools-resources/security-tools/arp-scan'
   url 'http://www.nta-monitor.com/tools/arp-scan/download/arp-scan-1.8.tar.gz'
   sha1 '26ebf18eff367aaf99307841bec9e8b9e596c3bb'
 
@@ -11,7 +11,7 @@ class ArpScan < Formula
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/arp-scan", "-V"
   end
 end

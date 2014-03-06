@@ -2,46 +2,46 @@ require 'formula'
 
 class Global < Formula
   homepage 'http://www.gnu.org/software/global/'
-  url 'http://ftpmirror.gnu.org/global/global-6.2.4.tar.gz'
-  mirror 'http://ftp.gnu.org/gnu/global/global-6.2.4.tar.gz'
-  sha1 'fff915079e7099de0174c47a1a8f6a5b870517d5'
+  url 'http://ftpmirror.gnu.org/global/global-6.2.10.tar.gz'
+  mirror 'http://ftp.gnu.org/gnu/global/global-6.2.10.tar.gz'
+  sha1 'aeaa31fec3ab693e75f659ff526c15da7c85c0f9'
 
-  option "without-rebuilding-php-parser", "Don't rebuild PHP parser; use provied parser"
+  head do
+    url 'cvs://:pserver:anonymous:@cvs.savannah.gnu.org:/sources/global:global'
+
+    depends_on :autoconf
+    depends_on :automake
+    depends_on :libtool
+  end
+
+  option 'with-exuberant-ctags', 'Enable Exuberant Ctags as a plug-in parser'
+
+  if build.with? 'exuberant-ctags'
+    depends_on 'ctags'
+    skip_clean 'lib/gtags/exuberant-ctags.la'
+  end
 
   def install
-    # Rebuilding the PHP parser, see:
-    # http://comments.gmane.org/gmane.comp.gnu.global.bugs/1439
-    unless build.include? "without-rebuilding-php-parser"
-      system "flex -o libparser/php.c libparser/php.l"
+    system "sh", "reconf.sh" if build.head?
+
+    args = %W[
+      --disable-dependency-tracking
+      --prefix=#{prefix}
+      --sysconfdir=#{etc}
+    ]
+
+    if build.with? 'exuberant-ctags'
+      args << "--with-exuberant-ctags=#{HOMEBREW_PREFIX}/bin/ctags"
     end
 
-    system "./configure", "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
+    system "./configure", *args
     system "make install"
+
+    etc.install 'gtags.conf'
 
     # we copy these in already
     cd share/'gtags' do
       rm %w[README COPYING LICENSE INSTALL ChangeLog AUTHORS]
     end
-  end
-
-  def caveats; <<-EOS.undent
-    GNU GLOBAL is distributed with a PHP parser generated with an
-    old version of flex(1). That parser has some limitation. See:
-      http://comments.gmane.org/gmane.comp.gnu.global.bugs/1439
-
-    Installing GNU GLOBAL with Homebrew will therefor rebuild the
-    PHP parser using Mac OS X' newer version of flex(1) which
-    generates a parser without the limit.
-
-    You can install GNU GLOBAL without rebuilding the PHP parser
-    (and instead use the parser distributed by GNU GLOBAL) by using
-    the option '--without-rebuilding-php-parser':
-
-      brew install global --without-rebuilding-php-parser
-
-    Use i.e. if you want to be sure whether a problem is caused by
-    the rebuild parser or some other thing in GNU GLOBAL.
-    EOS
   end
 end

@@ -2,8 +2,15 @@ require 'formula'
 
 class Fontconfig < Formula
   homepage 'http://fontconfig.org/'
-  url 'http://fontconfig.org/release/fontconfig-2.10.1.tar.gz'
-  sha1 'e377cbe989cd22d3a10020309c906ecbbcac0043'
+  url 'http://fontconfig.org/release/fontconfig-2.11.0.tar.bz2'
+  sha1 '969818b0326ac08241b11cbeaa4f203699f9b550'
+
+  bottle do
+    revision 1
+    sha1 '75aac7c039827ca3581116466cc7328c44eab4d6' => :mavericks
+    sha1 'ee6d064b5381c7d1884695bce1a0e39f2dfc15a5' => :mountain_lion
+    sha1 '7fc50a2d18fd503769aa70fd3811a12f5e8b03bf' => :lion
+  end
 
   keg_only :provided_pre_mountain_lion
 
@@ -12,38 +19,18 @@ class Fontconfig < Formula
   depends_on :freetype
   depends_on 'pkg-config' => :build
 
-  # Patch adapted from Macports patch for 2.9.0 defines sizeof based on __LP64__
-  # Fixes universal builds but seems groovy enough to apply in all cases.
-  # https://trac.macports.org/browser/trunk/dports/graphics/fontconfig/files/patch-check-arch-at-runtime.diff
-  def patches; DATA; end
-
   def install
     ENV.universal_binary if build.universal?
-    system "./configure", "--disable-dependency-tracking", "--with-add-fonts=/Library/Fonts,~/Library/Fonts", "--prefix=#{prefix}"
+    system "./configure", "--disable-dependency-tracking",
+                          "--disable-silent-rules",
+                          "--with-add-fonts=/System/Library/Fonts,/Library/Fonts,~/Library/Fonts",
+                          "--prefix=#{prefix}",
+                          "--localstatedir=#{var}",
+                          "--sysconfdir=#{etc}"
     system "make install"
   end
+
+  def post_install
+    system "#{bin}/fc-cache", "-frv"
+  end
 end
-
-__END__
---- a/src/fcarch.h	2012-07-23 19:01:32.000000000 -0700
-+++ b/src/fcarch.h	2012-10-20 10:29:15.000000000 -0700
-@@ -46,6 +46,19 @@
-  * be64		1234		8		8
-  */
-
-+#ifdef __APPLE__
-+# include <machine/endian.h>
-+# undef SIZEOF_VOID_P
-+# undef ALIGNOF_DOUBLE
-+# ifdef __LP64__
-+#  define SIZEOF_VOID_P 8
-+#  define ALIGNOF_DOUBLE 8
-+# else
-+#  define SIZEOF_VOID_P 4
-+#  define ALIGNOF_DOUBLE 4
-+# endif
-+#endif
-+
- #if defined(__DARWIN_BYTE_ORDER) && __DARWIN_BYTE_ORDER == __DARWIN_LITTLE_ENDIAN
- # define FC_ARCH_ENDIAN "le"
- #elif defined(__DARWIN_BYTE_ORDER) && __DARWIN_BYTE_ORDER == __DARWIN_BIG_ENDIAN

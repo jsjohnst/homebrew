@@ -1,16 +1,24 @@
 require 'formula'
 
 class Gnutls < Formula
-  homepage 'http://www.gnu.org/software/gnutls/gnutls.html'
-  url 'http://ftpmirror.gnu.org/gnutls/gnutls-3.1.4.tar.xz'
-  mirror 'http://ftp.gnu.org/gnu/gnutls/gnutls-3.1.4.tar.xz'
-  sha256 'f27d92cdca8a4f4406e58c91e90e9ce1c6f23d1bbeddf864be789b99b0ef7d70'
+  homepage 'http://gnutls.org'
+  url 'ftp://ftp.gnutls.org/gcrypt/gnutls/v3.2/gnutls-3.2.12.1.tar.xz'
+  mirror 'http://mirrors.dotsrc.org/gcrypt/gnutls/v3.2/gnutls-3.2.12.1.tar.xz'
+  sha1 '5ad26522ec18d6b54a17ff8d1d5b69bf2cd5c7ce'
+
+  bottle do
+    cellar :any
+    sha1 "63c97291213e9f02872aac775fa8608f9fde8f9d" => :mavericks
+    sha1 "af89106ed194090f9aabe0a6705f22b63ca24f32" => :mountain_lion
+    sha1 "76cf541a1736da00417d499b3223b80c0677ed18" => :lion
+  end
 
   depends_on 'xz' => :build
   depends_on 'pkg-config' => :build
   depends_on 'libtasn1'
-  depends_on 'p11-kit'
+  depends_on 'p11-kit' => :optional
   depends_on 'nettle'
+  depends_on 'guile' => :optional
 
   fails_with :llvm do
     build 2326
@@ -18,9 +26,18 @@ class Gnutls < Formula
   end
 
   def install
-    system "./configure", "--disable-dependency-tracking",
-                          "--disable-static",
-                          "--prefix=#{prefix}"
+    args = %W[
+      --disable-dependency-tracking
+      --disable-static
+      --prefix=#{prefix}
+    ]
+
+    if build.with? 'guile'
+      args << '--enable-guile'
+      args << '--with-guile-site-dir=no'
+    end
+
+    system "./configure", *args
     system "make install"
 
     # certtool shadows the OS X certtool utility

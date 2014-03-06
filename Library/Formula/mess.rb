@@ -2,8 +2,8 @@ require 'formula'
 
 class Mess < Formula
   homepage 'http://www.mess.org/'
-  url 'svn://dspnet.fr/mame/trunk', :revision => 17961
-  version '0.147'
+  url 'svn://dspnet.fr/mame/trunk', :revision => '26743'
+  version '0.152'
 
   head 'svn://dspnet.fr/mame/trunk'
 
@@ -12,10 +12,16 @@ class Mess < Formula
 
   def install
     ENV['MACOSX_USE_LIBSDL'] = '1'
-    ENV['INCPATH'] = "-I./src/lib/util -I#{MacOS::X11.include}"
+    ENV['INCPATH'] = "-I#{MacOS::X11.include}"
     ENV['PTR64'] = (MacOS.prefer_64_bit? ? '1' : '0')
 
-    system 'make', 'TARGET=mess', 'SUBTARGET=mess'
+    # Avoid memory allocation runtime error:
+    #   Error: attempt to free untracked memory in (null)(0)!
+    #   Ignoring MAME exception: Error: attempt to free untracked memory
+    ENV.O2 if ENV.compiler == :clang
+
+    system "make", "CC=#{ENV.cc}", "LD=#{ENV.cxx}",
+                   "TARGET=mess", "SUBTARGET=mess"
 
     if MacOS.prefer_64_bit?
       bin.install 'mess64' => 'mess'

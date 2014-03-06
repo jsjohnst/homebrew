@@ -2,17 +2,17 @@ require 'formula'
 
 class Isync < Formula
   homepage 'http://isync.sourceforge.net/'
-  url 'http://downloads.sourceforge.net/project/isync/isync/1.0.5/isync-1.0.5.tar.gz'
-  sha1 '9d19cde13b644d6e394f06d292b60503396d0500'
+  url 'https://downloads.sourceforge.net/project/isync/isync/1.1.0/isync-1.1.0.tar.gz'
+  sha1 'd99bd9603e17f94ebe4af1691482a6676ea0fb42'
 
-  head 'git://isync.git.sourceforge.net/gitroot/isync/isync'
+  head do
+    url 'git://git.code.sf.net/p/isync/isync'
 
-  depends_on 'berkeley-db'
-
-  if build.head?
     depends_on :autoconf
     depends_on :automake
   end
+
+  depends_on 'berkeley-db'
 
   def install
     system "touch", "ChangeLog" if build.head?

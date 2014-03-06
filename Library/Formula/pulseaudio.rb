@@ -1,55 +1,55 @@
 require 'formula'
 
 class Pulseaudio < Formula
-  homepage 'http://pulseaudio.org'
-  url 'http://freedesktop.org/software/pulseaudio/releases/pulseaudio-2.1.tar.gz'
-  sha1 '957399478456c1dd5632bc84e9ee06a07a9c4c9c'
+  homepage "http://pulseaudio.org"
+  url "http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz"
+  sha1 "9f0769dcb25318ba3faaa453fd2ed0c509fa9c5c"
 
-  head 'git://anongit.freedesktop.org/pulseaudio/pulseaudio'
+  option "with-nls", "Build with native language support"
+  option :universal
 
-  option "with-dbus", "Enable dbus"
+  depends_on "pkg-config" => :build
+  depends_on "xz" => :build
+  depends_on "libtool" => :build
+  depends_on "intltool" => :build if build.with? "nls"
+  depends_on "gettext" => :build if build.with? "nls"
 
-  # Dependencies from http://www.freedesktop.org/wiki/Software/PulseAudio/Ports/OSX
-  if build.head?
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool 
+  depends_on "json-c"
+  depends_on "libsndfile"
+  depends_on "libsamplerate"
+
+  depends_on :x11 => :optional
+  depends_on "glib" => :optional
+  depends_on "gconf" => :optional
+  depends_on "d-bus" => :optional
+  depends_on "gtk+3" => :optional
+  depends_on "jack" => :optional
+
+  fails_with :clang do
+    build 421
+    cause "error: thread-local storage is unsupported for the current target"
   end
-
-  depends_on 'pkg-config' => :build
-
-  depends_on 'intltool'
-  depends_on 'libsndfile'
-  depends_on 'speex'
-  depends_on 'gdbm'
-  depends_on 'liboil'
-  depends_on 'json-c'
-  depends_on 'dbus' if build.include? 'with-dbus'
 
   def install
-    args = ["--prefix=#{prefix}",
-            "--disable-jack",
-            "--disable-hal",
-            "--disable-bluez",
-            "--disable-avahi",
-            "--with-udev-rules-dir=#{prefix}/lib/udev/rules.d",
-            "--with-mac-sysroot=#{MacOS.sdk_path}",
-            "--with-mac-version-min=#{MacOS.version}"]
+    args = %W[
+      --disable-dependency-tracking
+      --disable-silent-rules
+      --prefix=#{prefix}
+      --enable-coreaudio-output
+      --disable-neon-opt
+      --with-mac-sysroot=/
+    ]
 
-    args << '--disable-dbus' unless build.include? 'with-dbus'
-    args << "--disable-nls" if build.head? and not Formula.factory('libtool').installed?
+    args << "--with-mac-sysroot=#{MacOS.sdk_path}"
+    args << "--with-mac-version-min=#{MacOS.version}"
+    args << "--disable-nls" unless build.with? "nls"
 
-    if build.head? then
-      system "./autogen.sh", *args
-    else
-      system "./configure", *args
+    if build.universal?
+      args << "--enable-mac-universal"
+      ENV.universal_binary
     end
 
-    system "make"
-    system "make install"
-  end
-
-  def test
-    system "#{bin}/pulseaudio"
+    system "./configure", *args
+    system "make", "install"
   end
 end

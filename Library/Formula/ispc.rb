@@ -1,16 +1,15 @@
 require 'formula'
 
 class Ispc < Formula
-  homepage 'http://ispc.github.com'
-  url 'https://github.com/downloads/ispc/ispc/ispc-v1.3.0-osx.tar.gz'
-  version '1.3.0'
-  sha1 'ec60f9e08405b6160b98aefd8cb4f9f7ee07c12e'
+  homepage 'http://ispc.github.io'
+  url 'https://downloads.sourceforge.net/project/ispcmirror/v1.6.0/ispc-v1.6.0-osx.tar.gz'
+  sha1 'cea50303a6bfcb213a485ada1337aa4b25807cb8'
 
   def install
     bin.install 'ispc'
   end
 
-  def test
+  test do
     system "#{bin}/ispc", "-v"
   end
 end

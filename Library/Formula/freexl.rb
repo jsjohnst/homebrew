@@ -2,8 +2,8 @@ require 'formula'
 
 class Freexl < Formula
   homepage 'https://www.gaia-gis.it/fossil/freexl/index'
-  url 'http://www.gaia-gis.it/gaia-sins/freexl-sources/freexl-1.0.0d.tar.gz'
-  sha1 'c10ebe65683eae4ca3a54c23e433d9cb57c58436'
+  url 'http://www.gaia-gis.it/gaia-sins/freexl-1.0.0g.tar.gz'
+  sha1 '2a5b1d3ebbaf217c7bda15b5b3f1e0222c6c1502'
 
   def install
     system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"

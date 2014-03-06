@@ -20,8 +20,7 @@ class Libharu < Formula
     system "./configure", "--disable-debug",
                           "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
-                          # libpng doesn't get picked up
-                          "--with-png=#{MacOS::X11.prefix}"
+                          "--with-png=#{Formula["libpng"].opt_prefix}"
     system "make install"
   end
 end

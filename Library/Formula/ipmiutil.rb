@@ -2,8 +2,8 @@ require 'formula'
 
 class Ipmiutil < Formula
   homepage 'http://ipmiutil.sourceforge.net/'
-  url 'http://downloads.sourceforge.net/project/ipmiutil/ipmiutil-2.8.5.tar.gz'
-  sha1 'b79dfddf09d685fb92fba08dd8d1fb8f84adcea9'
+  url 'https://downloads.sourceforge.net/project/ipmiutil/ipmiutil-2.9.1.tar.gz'
+  sha1 'f23fabe8339842fea9b8c2a601717dc002e44a9d'
 
   # Make ipmiutil treat Darwin as BSD
   def patches
@@ -26,8 +26,8 @@ class Ipmiutil < Formula
                    "install"
   end
 
-  def test
-    system "#{bin}/ipmiutil delloem help"
+  test do
+    system "#{bin}/ipmiutil", "delloem", "help"
   end
 end
 

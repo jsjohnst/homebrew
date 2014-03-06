@@ -1,11 +1,16 @@
 require 'formula'
 
 class Sipp < Formula
-  url 'http://downloads.sourceforge.net/project/sipp/sipp/3.2/sipp.svn.tar.gz'
   homepage 'http://sipp.sourceforge.net/'
-  sha1 'cef9e061b3223b228ae403f897edc192b3ce2ce7'
+  url "https://downloads.sourceforge.net/project/sipp/sipp/3.4/sipp-3.3.990.tar.gz"
+  sha1 "b2637cb72556595253bbdd4a68cc974c9ac1d92e"
+
+  depends_on "openssl" => :optional
 
   def install
+    args = ["--with-pcap"]
+    args << "--with-openssl" if build.with? "openssl"
+    system "./configure", *args
     system "make", "DESTDIR=#{prefix}"
     bin.install "sipp"
   end

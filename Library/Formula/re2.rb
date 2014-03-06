@@ -1,17 +1,24 @@
 require 'formula'
 
 class Re2 < Formula
+  homepage 'https://code.google.com/p/re2/'
+  url 'https://re2.googlecode.com/files/re2-20140111.tgz'
+  sha1 'd51b3c2e870291070a1bcad8e5b471ae83e1f8df'
+
   head 'https://re2.googlecode.com/hg'
-  homepage 'http://code.google.com/p/re2/'
 
   def install
-    inreplace 'Makefile' do |s|
-      s.change_make_var! "prefix", prefix
-      s.gsub! ".so", ".dylib"
+    # https://code.google.com/p/re2/issues/detail?id=99
+    if ENV.compiler != :clang || MacOS.version < :mavericks
+      inreplace 'libre2.symbols.darwin',
+                # operator<<(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, re2::StringPiece const&)
+                '__ZlsRNSt3__113basic_ostreamIcNS_11char_traitsIcEEEERKN3re211StringPieceE',
+                # operator<<(std::ostream&, re2::StringPiece const&)
+                '__ZlsRSoRKN3re211StringPieceE'
     end
-
-    lib.mkdir
-    system "make"
-    system "make install"
+    system "make", "install", "prefix=#{prefix}"
+    mv lib/"libre2.so.0.0.0", lib/"libre2.0.0.0.dylib"
+    ln_s "libre2.0.0.0.dylib", lib/"libre2.0.dylib"
+    ln_s "libre2.0.0.0.dylib", lib/"libre2.dylib"
   end
 end

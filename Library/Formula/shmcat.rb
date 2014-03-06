@@ -2,8 +2,8 @@ require 'formula'
 
 class Shmcat < Formula
   homepage 'http://shmcat.sourceforge.net/'
-  url 'http://heanet.dl.sourceforge.net/project/shmcat/shmcat-1.5.tar.bz2'
-  sha1 'ab0aa596eccfc0343f5863cc4ceb874f91ad9d09'
+  url 'https://downloads.sourceforge.net/project/shmcat/shmcat-1.6.tar.bz2'
+  sha1 '13650adef363bf9c7c97602036cf6c3241f1a86d'
 
   option 'with-ftok', "Build the ftok utility"
   option 'with-nls', "Use Native Language Support"
@@ -17,7 +17,7 @@ class Shmcat < Formula
     ]
     args << "--disable-ftok" unless build.include? 'with-ftok'
     if build.include? 'with-nls'
-      gettext = Formula.factory('gettext')
+      gettext = Formula['gettext']
       args << "--with-libintl-prefix=#{gettext.include}"
     else
       args << "--disable-nls"

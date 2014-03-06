@@ -2,7 +2,7 @@ require 'formula'
 
 class W3m < Formula
   homepage 'http://w3m.sourceforge.net/'
-  url 'http://downloads.sourceforge.net/project/w3m/w3m/w3m-0.5.3/w3m-0.5.3.tar.gz'
+  url 'https://downloads.sourceforge.net/project/w3m/w3m/w3m-0.5.3/w3m-0.5.3.tar.gz'
   sha1 '444b6c8cf7094ee95f8e9de96b37f814b9d83237'
 
   depends_on 'bdw-gc'
@@ -20,7 +20,7 @@ class W3m < Formula
   def install
     system "./configure", "--prefix=#{prefix}", "--disable-image"
     # Race condition in build reported in:
-    # https://github.com/mxcl/homebrew/issues/12854
+    # https://github.com/Homebrew/homebrew/issues/12854
     ENV.j1 #
     system "make install"
   end

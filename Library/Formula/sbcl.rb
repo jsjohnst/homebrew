@@ -1,22 +1,16 @@
 require 'formula'
 
-class SbclBootstrapBinaries < Formula
-  url 'http://downloads.sourceforge.net/project/sbcl/sbcl/1.0.55/sbcl-1.0.55-x86-darwin-binary.tar.bz2'
-  sha1 '8ea71938c40a6dccfe2d43a86e9b115f4428a218'
-  version "1.0.55"
-end
-
 class Sbcl < Formula
   homepage 'http://www.sbcl.org/'
-  url 'http://downloads.sourceforge.net/project/sbcl/sbcl/1.1.1/sbcl-1.1.1-source.tar.bz2'
-  sha1 '87e8c37a2811e10d044074ec8bfc79918c66f2d8'
+  url 'https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.16/sbcl-1.1.16-source.tar.bz2'
+  sha1 '27bad72be3eb4a078c362d1ec2a52cf9ec1d5ecb'
 
   head 'git://sbcl.git.sourceforge.net/gitroot/sbcl/sbcl.git'
 
   bottle do
-    sha1 '8d568b7db2feecdb281805583f7ea3a7d104d6ac' => :mountainlion
-    sha1 'f6a50ffac61f5bb4ff398791b5a93f32f8983a25' => :lion
-    sha1 'e718dfaf3b7aa4b2be8e62d5274d59a0fedfc24b' => :snowleopard
+    sha1 "86a3582cfbb2789c438c6a174869861842df32be" => :mavericks
+    sha1 "95cd6954553cc4f98c62d18475c83e6ff7bb02b0" => :mountain_lion
+    sha1 "07f044546e8a15e802b82907bbb1c4805bf99a28" => :lion
   end
 
   fails_with :llvm do
@@ -28,6 +22,18 @@ class Sbcl < Formula
   option "without-threads", "Build SBCL without support for native threads"
   option "with-ldb", "Include low-level debugger in the build"
   option "with-internal-xref", "Include XREF information for SBCL internals (increases core size by 5-6MB)"
+
+  # Current binary versions are listed at http://sbcl.sourceforge.net/platform-table.html
+
+  resource 'bootstrap64' do
+    url 'https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.8/sbcl-1.1.8-x86-64-darwin-binary.tar.bz2'
+    sha1 'cffd8c568588f48bd0c69295a385b662d27983cf'
+  end
+
+  resource 'bootstrap32' do
+    url 'https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.6/sbcl-1.1.6-x86-darwin-binary.tar.bz2'
+    sha1 '35a76b93f8714bc34ba127df4aaf69aacfc08164'
+  end
 
   def patches
     { :p0 => [
@@ -59,10 +65,11 @@ class Sbcl < Formula
     # Remove non-ASCII values from environment as they cause build failures
     # More information: http://bugs.gentoo.org/show_bug.cgi?id=174702
     ENV.delete_if do |key, value|
-      value =~ /[\x80-\xff]/
+      value =~ /[\x80-\xff]/n
     end
 
-    SbclBootstrapBinaries.new.brew do
+    bootstrap = (build.build_32_bit? || !MacOS.prefer_64_bit?) ? 'bootstrap32' : 'bootstrap64'
+    resource(bootstrap).stage do
       # We only need the binaries for bootstrapping, so don't install anything:
       command = Dir.pwd + "/src/runtime/sbcl"
       core = Dir.pwd + "/output/sbcl.core"
@@ -70,11 +77,21 @@ class Sbcl < Formula
 
       cd buildpath do
         ENV['SBCL_ARCH'] = 'x86' if build.build_32_bit?
+        Pathname.new("version.lisp-expr").write('"1.0.99.999"') if build.head?
         system "./make.sh", "--prefix=#{prefix}", "--xc-host=#{xc_cmdline}"
       end
     end
 
     ENV['INSTALL_ROOT'] = prefix
     system "sh install.sh"
+  end
+
+  test do
+    (testpath/'simple.sbcl').write <<-EOS.undent
+      (write-line (write-to-string (+ 2 2)))
+    EOS
+    output = `'#{bin}/sbcl' --script #{testpath}/simple.sbcl`
+    assert_equal '4', output.strip
+    assert_equal 0, $?.exitstatus
   end
 end

@@ -2,8 +2,8 @@ require 'formula'
 
 class Geoserver < Formula
   homepage 'http://geoserver.org/'
-  url 'http://sourceforge.net/projects/geoserver/files/GeoServer/2.2.1/geoserver-2.2.1-bin.zip'
-  sha1 'adc927ac961d0248d95d82794cba843927cde6cc'
+  url 'https://downloads.sourceforge.net/project/geoserver/GeoServer/2.4.1/geoserver-2.4.1-bin.zip'
+  sha1 '1f33e16c14bc0bceea1ffa74a0d528dd832de611'
 
   def install
     libexec.install Dir['*']
@@ -18,11 +18,11 @@ class Geoserver < Formula
   end
 
   def caveats; <<-EOS.undent
-      To start geoserver
-        geoserver path/to/data/dir
+    To start geoserver:
+      geoserver path/to/data/dir
 
-      See the Geoserver homepage for more setup information:
-        brew home geoserver
+    See the Geoserver homepage for more setup information:
+      brew home geoserver
     EOS
   end
 end

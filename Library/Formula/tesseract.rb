@@ -1,27 +1,44 @@
 require 'formula'
 
-def install_language_data
-  langs = {
-    'eng'     => 'f2d57eea524ead247612bd027375037c21e22463',
-    'heb'     => '648d9ea2bbf42f0410700a2afd02aaea64f89f28',
-    'hin'     => 'ad3137d84b917a4d5bd576bfd2c540d5c6645ae1',
-    'ara'     => '862b8dbfe655d31201229571b46512f18892760f',
-    'tha'     => 'fa1621c7d0dc871d140fdbd4eb326a09e37272d3',
-    'slk-frak' => '9420b153514fd0b3f8d77240ca1523b5c6d672d0'
-  }
+class Tesseract < Formula
+  homepage 'http://code.google.com/p/tesseract-ocr/'
+  url 'http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz'
+  sha1 'a950acf7b75cf851de2de787e9abb62c58ca1827'
 
-  langs.each do |lang, sha|
-    klass = Class.new(Formula) do
-      url "http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.01.#{lang}.tar.gz"
-      version '3.01'
-      sha1 sha
-    end
+  head do
+    url 'http://tesseract-ocr.googlecode.com/svn/trunk'
 
-    klass.new.brew { mv Dir['tessdata/*'], "#{share}/tessdata/" }
+    depends_on :autoconf
+    depends_on :automake
+    depends_on :libtool
   end
 
-  # pre-3.01 language data uses a different URL format and installs differently
-  langs_old = {
+  option "all-languages", "Install recognition data for all languages"
+
+  depends_on 'libtiff'
+  depends_on 'leptonica'
+
+  fails_with :llvm do
+    build 2206
+    cause "Executable 'tesseract' segfaults on 10.6 when compiled with llvm-gcc"
+  end
+
+  LANGS = {
+    'eng' => '989ed4c3a5b246d7353893e466c353099d8b73a1',
+    'heb' => '67e10e616caf62545eacd436e85f89436687e22b',
+    'hin' => '4ceef97ffb8b4ab5ac79ee4bad5b5be0885f228f',
+    'ara' => 'e15cf6b7a027454db56ecedab0038c7739ab29cc',
+    'tha' => '04a35c04585a887662dc668e54f5368dabf31f50'
+  }
+
+  LANGS.each do |name, sha|
+    resource name do
+      url "http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.#{name}.tar.gz"
+      sha1 sha
+    end
+  end
+
+  LANGS_OLD = {
     'chr'       => 'e49b17bb73911926050d45832171a54ab1d1f34c',
     'deu-frak'  => '5651562e0d944b5b89cc5977d71482089f12669f',
     'swe-frak'  => '22220ad4303ebe290e4e71170e96b488e81a7f1a',
@@ -57,69 +74,40 @@ def install_language_data
     'deu'       => 'c4b3ecde18ce9f114faba88cdfd0308f90801266',
     'dan'       => 'bfac9c00d28fc4b19034c2098d41087a173084ae',
     'ces'       => 'dbec19aa23f42a08e6b195a96e64b443f7519620',
-    'cat'       => '0301a9c81c1d646bd1b135ca89476fb63bd634f8'
+    'cat'       => '0301a9c81c1d646bd1b135ca89476fb63bd634f8',
   }
 
-  langs_old.each do |lang, sha|
-    klass = Class.new(Formula) do
-      url "http://tesseract-ocr.googlecode.com/files/#{lang}.traineddata.gz",
-        :using => GzipOnlyDownloadStrategy
-      version '3.00'
+  # pre-3.01 language data uses a different URL format and installs differently
+  LANGS_OLD.each do |lang, sha|
+    resource lang do
+      url "http://tesseract-ocr.googlecode.com/files/#{lang}.traineddata.gz"
+      version "3.00"
       sha1 sha
     end
-
-    klass.new.brew { mv Dir['*'], "#{share}/tessdata/" }
-  end
-
-end
-
-# This stays around for the English-only build option
-class TesseractEnglishData < Formula
-  url 'http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.01.eng.tar.gz'
-  version '3.01'
-  sha1 'f2d57eea524ead247612bd027375037c21e22463'
-end
-
-class Tesseract < Formula
-  homepage 'http://code.google.com/p/tesseract-ocr/'
-  url 'http://tesseract-ocr.googlecode.com/files/tesseract-3.01.tar.gz'
-  sha1 'c0b605d7192b3071842fe535c82b89c65f2d9c67'
-
-  option "all-languages", "Install recognition data for all languages"
-
-  depends_on :automake
-  depends_on :libtool
-  depends_on 'libtiff'
-  depends_on 'leptonica'
-
-  fails_with :llvm do
-    build 2206
-    cause "Executable 'tesseract' segfaults on 10.6 when compiled with llvm-gcc"
   end
 
   def install
-    system "/bin/sh autogen.sh"
-
     # explicitly state leptonica header location, as the makefile defaults to /usr/local/include,
     # which doesn't work for non-default homebrew location
     ENV['LIBLEPT_HEADERSDIR'] = HOMEBREW_PREFIX/"include"
 
+    system './autogen.sh' if build.head?
     system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
     system "make install"
     if build.include? "all-languages"
       install_language_data
     else
-      TesseractEnglishData.new.brew { mv Dir['tessdata/*'], "#{share}/tessdata/" }
+      resource('eng').stage { mv Dir['tessdata/*'], "#{share}/tessdata/" }
     end
   end
 
-  def caveats; <<-EOF.undent
-    Tesseract is an OCR (Optical Character Recognition) engine.
+  def install_language_data
+    LANGS.each_key do |lang|
+      resource(lang).stage { mv Dir["tessdata/*"], "#{share}/tessdata/" }
+    end
 
-    The easiest way to use it is to convert the source to a Grayscale tiff:
-      `convert source.png -type Grayscale terre_input.tif`
-    then run tesseract:
-      `tesseract terre_input.tif output`
-    EOF
+    LANGS_OLD.each_key do |lang|
+      resource(lang).stage { mv Dir["*"], "#{share}/tessdata/" }
+    end
   end
 end

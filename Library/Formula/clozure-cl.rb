@@ -1,10 +1,12 @@
 require 'formula'
 
 class ClozureCl < Formula
-  url 'ftp://ftp.clozure.com/pub/release/1.8/ccl-1.8-darwinx86.tar.gz'
-  version '1.8'
   homepage 'http://ccl.clozure.com/'
-  sha1 'a155fc0d74a463bd6281ed66e7703b84c03afd33'
+  url 'ftp://ftp.clozure.com/pub/release/1.9/ccl-1.9-darwinx86.tar.gz'
+  version '1.9'
+  sha1 '589b94093fc356c458ab288aceb5a3d5d9d7b829'
+
+  conflicts_with 'cclive', :because => 'both install a ccl binary'
 
   def install
     # Get rid of all the .svn dirs, that for some reason are
@@ -43,21 +45,13 @@ class ClozureCl < Formula
     end
   end
 
-  def caveats
-    <<-CAVEATS
-    Run `ccl` to run a 32-bit session, and `ccl64` for a 64-bit one.
-
-    To test if everything works correctly, run `brew test #{name}`.
-    CAVEATS
-  end
-
   # Generates a string to test the ccl scripts that can be passed directly to `system'
   def test_ccl(bit = 32)
     ccl = bin + "ccl#{'64' if bit == 64}"
     %Q{#{ccl} -e '(progn (format t "Hello world from #{bit}-bit ClozureCL") (ccl::quit))'}
   end
 
-  def test
+  test do
     system test_ccl
     system test_ccl(64)
   end

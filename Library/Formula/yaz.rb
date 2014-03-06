@@ -2,10 +2,11 @@ require 'formula'
 
 class Yaz < Formula
   homepage 'http://www.indexdata.com/yaz'
-  url 'http://ftp.indexdata.dk/pub/yaz/yaz-4.2.44.tar.gz'
-  sha1 'cd1f2275dc43e104dcb92c515a4264ea3c161a6e'
+  url 'http://ftp.indexdata.dk/pub/yaz/yaz-5.0.14.tar.gz'
+  sha1 'a599f37cbbb91703c934f0207a346dd3a1cf9a5a'
 
   depends_on 'pkg-config' => :build
+  depends_on 'gnutls' => :optional
 
   def install
     system "./configure", "--disable-dependency-tracking",

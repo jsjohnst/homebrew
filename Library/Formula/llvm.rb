@@ -1,43 +1,40 @@
 require 'formula'
 
-class Clang < Formula
-  homepage  'http://llvm.org/'
-  url       'http://llvm.org/releases/3.1/clang-3.1.src.tar.gz'
-  sha1      '19f33b187a50d22fda2a6f9ed989699a9a9efd62'
-
-  head      'http://llvm.org/git/clang.git'
-end
-
 class Llvm < Formula
-  homepage  'http://llvm.org/'
-  url       'http://llvm.org/releases/3.1/llvm-3.1.src.tar.gz'
-  sha1      '234c96e73ef81aec9a54da92fc2a9024d653b059'
+  homepage 'http://llvm.org/'
+  url 'http://llvm.org/releases/3.4/llvm-3.4.src.tar.gz'
+  sha1 '10b1fd085b45d8b19adb9a628353ce347bc136b8'
 
-  head      'http://llvm.org/git/llvm.git'
-
-  bottle do
-    sha1 'fcf6c3eb5b074afa820f905f32182e074a29ffb5' => :mountainlion
-    sha1 '4ee3e9242cff9a03af4e1f20017fe547dcd07a4a' => :lion
-    sha1 '940aca37dafaf69a9b378ffd2a59b3c1cfe54ced' => :snowleopard
+  resource 'clang' do
+    url 'http://llvm.org/releases/3.4/clang-3.4.src.tar.gz'
+    sha1 'a6a3c815dd045e9c13c7ae37d2cfefe65607860d'
   end
 
   option :universal
-  option 'with-clang', 'Build Clang C/ObjC/C++ frontend'
-  option 'shared', 'Build LLVM as a shared library'
+  option 'with-clang', 'Build Clang support library'
+  option 'disable-shared', "Don't build LLVM as a shared library"
   option 'all-targets', 'Build all target backends'
   option 'rtti', 'Build with C++ RTTI'
+  option 'disable-assertions', 'Speeds up LLVM, but provides less debug information'
+
+  depends_on :python => :recommended
+
+  env :std if build.universal?
+
+  keg_only :provided_by_osx
 
   def install
-    if build.universal? and build.include? 'shared'
-      onoe "Cannot specify both shared and universal (will not build)"
-      exit 1
+    if build.with? "python" and build.include? 'disable-shared'
+      raise 'The Python bindings need the shared library.'
     end
 
-    Clang.new("clang").brew { clang_dir.install Dir['*'] } if build.include? 'with-clang'
+    resource('clang').stage do
+      (buildpath/'tools/clang').install Dir['*']
+    end if build.with? 'clang'
 
     if build.universal?
       ENV['UNIVERSAL'] = '1'
-      ENV['UNIVERSAL_ARCH'] = 'i386 x86_64'
+      ENV['UNIVERSAL_ARCH'] = Hardware::CPU.universal_archs.join(' ')
     end
 
     ENV['REQUIRES_RTTI'] = '1' if build.include? 'rtti'
@@ -55,36 +52,34 @@ class Llvm < Formula
     else
       args << "--enable-targets=host"
     end
-    args << "--enable-shared" if build.include? 'shared'
+    args << "--enable-shared" unless build.include? 'disable-shared'
+
+    args << "--disable-assertions" if build.include? 'disable-assertions'
 
     system "./configure", *args
-    system "make install"
+    system 'make'
+    system 'make', 'install'
+
+    (share/'llvm/cmake').install buildpath/'cmake/modules'
 
     # install llvm python bindings
-    (share/'llvm/bindings').install buildpath/'bindings/python'
-
-    # install clang tools and bindings
-    cd clang_dir do
-      system 'make install'
-      (share/'clang/tools').install 'tools/scan-build', 'tools/scan-view'
-      (share/'clang/bindings').install 'bindings/python'
-    end if build.include? 'with-clang'
+    if build.with? "python"
+      (lib+'python2.7/site-packages').install buildpath/'bindings/python/llvm'
+      (lib+'python2.7/site-packages').install buildpath/'tools/clang/bindings/python/clang' if build.with? 'clang'
+    end
   end
 
-  def test
+  test do
     system "#{bin}/llvm-config", "--version"
   end
 
-  def caveats; <<-EOS.undent
-    Extra tools and bindings are installed in #{share}/llvm and #{share}/clang.
+  def caveats
+    <<-EOS.undent
+      Extra tools are installed in #{share}/llvm and #{share}/clang.
 
-    If you already have LLVM installed, then "brew upgrade llvm" might not work.
-    Instead, try:
-        brew rm llvm && brew install llvm
+      If you already have LLVM installed, then "brew upgrade llvm" might not work.
+      Instead, try:
+          brew rm llvm && brew install llvm
     EOS
-  end
-
-  def clang_dir
-    buildpath/'tools/clang'
   end
 end

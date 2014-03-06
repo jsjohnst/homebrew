@@ -2,8 +2,8 @@ require 'formula'
 
 class Varnish < Formula
   homepage 'http://www.varnish-cache.org/'
-  url 'http://repo.varnish-cache.org/source/varnish-3.0.3.tar.gz'
-  sha1 '6e1535caa30c3f61af00160c59d318e470cd6f57'
+  url 'http://repo.varnish-cache.org/source/varnish-3.0.5.tar.gz'
+  sha1 '2f3eae44cc44d263fe9513b856f49707a64cc840'
 
   depends_on 'pkg-config' => :build
   depends_on 'pcre'
@@ -16,32 +16,7 @@ class Varnish < Formula
     (var+'varnish').mkpath
   end
 
-  def caveats; <<-EOS.undent
-    To launch on startup (port > 1024):
-    * if this is your first install:
-        mkdir -p ~/Library/LaunchAgents
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
-
-    * if this is an upgrade and you already have the #{plist_path.basename} loaded:
-        launchctl unload -w ~/Library/LaunchAgents/#{plist_path.basename}
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
-
-    To launch on startup (port < 1024):
-    * if this is your first install:
-        sudo cp #{plist_path} /Library/LaunchAgents/
-        sudo launchctl load -w /Library/LaunchAgents/#{plist_path.basename}
-
-    * if this is an upgrade and you already have the #{plist_path.basename} loaded:
-        sudo launchctl unload -w /Library/LaunchAgents/#{plist_path.basename}
-        sudo cp #{plist_path} /Library/LaunchAgents/
-        sudo launchctl load -w /Library/LaunchAgents/#{plist_path.basename}
-
-    EOS
-  end
-
-  def startup_plist; <<-EOPLIST.undent
+  def plist; <<-EOS.undent
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
       <plist version="1.0">
@@ -50,7 +25,7 @@ class Varnish < Formula
         <string>#{plist_name}</string>
         <key>ProgramArguments</key>
         <array>
-          <string>#{HOMEBREW_PREFIX}/sbin/varnishd</string>
+          <string>#{opt_prefix}/sbin/varnishd</string>
           <string>-n</string>
           <string>#{var}/varnish</string>
           <string>-f</string>
@@ -74,6 +49,6 @@ class Varnish < Formula
         <string>#{var}/varnish/varnish.log</string>
       </dict>
       </plist>
-    EOPLIST
+    EOS
   end
 end

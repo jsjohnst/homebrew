@@ -2,18 +2,26 @@ require 'formula'
 
 class Tmux < Formula
   homepage 'http://tmux.sourceforge.net'
-  url 'http://sourceforge.net/projects/tmux/files/tmux/tmux-1.7/tmux-1.7.tar.gz'
-  sha1 'ee6942a1bc3fc650036f26921d80bc4b73d56df6'
+  url 'https://downloads.sourceforge.net/project/tmux/tmux/tmux-1.9/tmux-1.9a.tar.gz'
+  sha1 '815264268e63c6c85fe8784e06a840883fcfc6a2'
 
-  head 'git://tmux.git.sourceforge.net/gitroot/tmux/tmux'
+  bottle do
+    cellar :any
+    sha1 "258df085ed5fd3ff4374337294641bd057b81ff4" => :mavericks
+    sha1 "3838e790a791d44464df6e7fcd25d8558d864d9c" => :mountain_lion
+    sha1 "4368a7f81267c047050758338eb8f4207da12224" => :lion
+  end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libevent'
+  head do
+    url 'git://git.code.sf.net/p/tmux/tmux-code'
 
-  if build.head?
+    depends_on :autoconf
     depends_on :automake
     depends_on :libtool
   end
+
+  depends_on 'pkg-config' => :build
+  depends_on 'libevent'
 
   def install
     system "sh", "autogen.sh" if build.head?
@@ -24,20 +32,17 @@ class Tmux < Formula
                           "--sysconfdir=#{etc}"
     system "make install"
 
-    (prefix+'etc/bash_completion.d').install "examples/bash_completion_tmux.sh" => 'tmux'
-
-    # Install addtional meta file
-    prefix.install 'NOTES'
+    bash_completion.install "examples/bash_completion_tmux.sh" => 'tmux'
+    (share/'tmux').install "examples"
   end
 
   def caveats; <<-EOS.undent
-    Additional information can be found in:
-      #{prefix}/NOTES
+    Example configurations have been installed to:
+      #{share}/tmux/examples
     EOS
   end
 
-  def test
+  test do
     system "#{bin}/tmux", "-V"
   end
 end
-

@@ -2,33 +2,48 @@ require 'formula'
 
 class Libgcrypt < Formula
   homepage 'http://gnupg.org/'
-  url 'ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-1.5.0.tar.bz2'
-  sha1 '3e776d44375dc1a710560b98ae8437d5da6e32cf'
+  url 'ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-1.6.1.tar.bz2'
+  sha1 'f03d9b63ac3b17a6972fc11150d136925b702f02'
+
+  bottle do
+    cellar :any
+    sha1 "aeebdee7d9887b3bf6ec5df41cc41c28dca98ce9" => :mavericks
+    sha1 "24efe9c0ff37edb0e88f94714c3e10483614cd07" => :mountain_lion
+    sha1 "f0c2d69e6552d69fa59342613831b96085ebd85e" => :lion
+  end
 
   depends_on 'libgpg-error'
 
-  def patches
-    if ENV.compiler == :clang
-      {:p0 =>
-      "https://trac.macports.org/export/85232/trunk/dports/devel/libgcrypt/files/clang-asm.patch"}
-    end
-  end
+  option :universal
 
-  def cflags
-    cflags = ENV.cflags.to_s
-    cflags += ' -std=gnu89 -fheinous-gnu-extensions' if ENV.compiler == :clang
-    cflags
+  resource 'config.h.ed' do
+    url 'http://trac.macports.org/export/113198/trunk/dports/devel/libgcrypt/files/config.h.ed'
+    version '113198'
+    sha1 '136f636673b5c9d040f8a55f59b430b0f1c97d7a'
+  end if build.universal?
+
+  fails_with :clang do
+    build 77
+    cause "basic test fails"
   end
 
   def install
-    ENV.universal_binary
+    ENV.universal_binary if build.universal?
+
+    ENV.append 'CFLAGS', '-std=gnu89 -fheinous-gnu-extensions' if ENV.compiler == :clang
 
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--disable-asm",
                           "--with-gpg-error-prefix=#{HOMEBREW_PREFIX}"
+
+    if build.universal?
+      buildpath.install resource('config.h.ed')
+      system "ed -s - config.h <config.h.ed"
+    end
+
     # Parallel builds work, but only when run as separate steps
-    system "make", "CFLAGS=#{cflags}"
+    system "make", "CFLAGS=#{ENV.cflags}"
     system "make check"
     system "make install"
   end

@@ -1,13 +1,13 @@
 require 'formula'
 
 class Gibo < Formula
-  homepage 'https://github.com/simonwhitaker/gitignore-boilerplates'
-  url 'https://github.com/simonwhitaker/gitignore-boilerplates/tarball/1.0.1'
-  sha1 '63b46c7ac725a25f6b9df47cebc8f798ac048b1e'
+  homepage 'https://github.com/simonwhitaker/gibo'
+  url 'https://github.com/simonwhitaker/gibo/archive/1.0.2.tar.gz'
+  sha1 '58c809c99841975a00fbdc540af4b3c478b95c7b'
 
   def install
     bin.install "gibo"
-    (prefix/'etc/bash_completion.d').install 'gibo-completion.bash'
-    (share/'zsh/site-functions').install 'gibo-completion.zsh' => '_gibo'
+    bash_completion.install 'gibo-completion.bash'
+    zsh_completion.install 'gibo-completion.zsh' => '_gibo'
   end
 end

@@ -2,7 +2,7 @@ require 'formula'
 
 class Remctl < Formula
   homepage 'http://www.eyrie.org/~eagle/software/remctl/'
-  url 'http://archives.eyrie.org/software/kerberos/remctl-3.2.tar.gz'
+  url 'http://archives.eyrie.org/software/ARCHIVE/remctl/remctl-3.2.tar.gz'
   sha1 'f49c287c29b6b289995b8907edc6ecba4c298c99'
 
   depends_on 'pcre'
@@ -14,7 +14,7 @@ class Remctl < Formula
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/remctl", "-v"
   end
 end

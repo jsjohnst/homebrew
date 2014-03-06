@@ -2,30 +2,37 @@ require 'formula'
 
 class SpatialiteGui < Formula
   homepage 'https://www.gaia-gis.it/fossil/spatialite_gui/index'
-  url 'http://www.gaia-gis.it/gaia-sins/spatialite_gui-1.5.0-stable.tar.gz'
+  url 'http://www.gaia-gis.it/gaia-sins/spatialite-gui-sources/spatialite_gui-1.5.0-stable.tar.gz'
   sha1 'b8cfe3def8c77928f7c9fcc86bae3c99179fa486'
 
+  devel do
+    url 'http://www.gaia-gis.it/gaia-sins/spatialite-gui-sources/spatialite_gui-1.7.1.tar.gz'
+    sha1 '3b9d88e84ffa5a4f913cf74b098532c2cd15398f'
+
+    depends_on 'libxml2'
+  end
+
+  depends_on 'pkg-config' => :build
   depends_on 'libspatialite'
   depends_on 'libgaiagraphics'
-
   depends_on 'wxmac'
+  depends_on 'geos'
+  depends_on 'proj'
+  depends_on 'freexl'
+  depends_on 'sqlite'
 
   def patches
     patch_set = {
       :p1 => DATA
     }
     # Compatibility fix for wxWidgets 2.9.x. Remove on next release.
-    patch_set[:p0] = 'https://www.gaia-gis.it/fossil/spatialite_gui/vpatch?from=d8416d26358a24dc&to=b5b920d8d654dd0e'
+    patch_set[:p0] = 'https://www.gaia-gis.it/fossil/spatialite_gui/vpatch?from=d8416d26358a24dc&to=b5b920d8d654dd0e' unless build.devel?
 
     patch_set
   end
 
   def install
-    # This lib doesn't get picked up by configure.
-    ENV.append 'LDFLAGS', '-lwx_osx_cocoau_aui-2.9'
-
-    system "./configure", "--disable-debug",
-                          "--prefix=#{prefix}"
+    system "./configure", "--prefix=#{prefix}"
     system "make install"
   end
 end
@@ -52,7 +59,7 @@ index a857e8a..9c90afb 100644
 @@ -71,6 +71,12 @@
  #define unlink	_unlink
  #endif
- 
+
 +#ifdef __WXMAC__
 +// Allow the program to run and recieve focus without creating an app bundle.
 +#include <Carbon/Carbon.h>
@@ -83,6 +90,6 @@ index a857e8a..9c90afb 100644
 +
    return true;
  }
- 
--- 
+
+--
 1.7.9

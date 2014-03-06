@@ -1,11 +1,13 @@
 require 'formula'
 
 class Libass < Formula
-  homepage 'http://code.google.com/p/libass/'
-  url 'http://libass.googlecode.com/files/libass-0.10.1.tar.gz'
-  sha1 '6537c572115cacb6011e314f9d4d37b1a7d0df8d'
+  homepage 'https://github.com/libass/libass'
+  url 'https://github.com/libass/libass/releases/download/0.11.1/libass-0.11.1.tar.gz'
+  sha1 '2a5517e634b3606c7dad5a42eae6ad8b23f8e097'
 
   depends_on 'pkg-config' => :build
+  depends_on 'yasm' => :build
+
   depends_on :freetype
   depends_on 'fribidi'
   depends_on :fontconfig
