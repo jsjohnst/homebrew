@@ -2,15 +2,18 @@ require 'formula'
 
 class Mupdf < Formula
   homepage 'http://mupdf.com'
-  url 'http://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz'
+  url 'https://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz'
   sha1 '082325aceb5565b07b82c2b6cc52a97533e03cf9'
+  revision 1
 
   depends_on :macos => :snow_leopard
 
   depends_on 'jpeg'
   depends_on 'openjpeg'
   depends_on 'jbig2dec'
-  depends_on :x11 # libpng, freetype and the X11 libs
+  depends_on 'libpng'
+  depends_on 'freetype'
+  depends_on :x11
 
   def install
     openjpeg = Formula["openjpeg"]

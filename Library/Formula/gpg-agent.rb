@@ -15,7 +15,7 @@ class GpgAgent < Formula
 
   # Adjust package name to fit our scheme of packaging both
   # gnupg 1.x and 2.x, and gpg-agent separately
-  def patches; DATA; end
+  patch :DATA
 
   def install
     # don't use Clang's internal stdint.h
@@ -24,8 +24,8 @@ class GpgAgent < Formula
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--enable-agent-only",
-                          "--with-pinentry-pgm=#{Formula['pinentry'].opt_prefix}/bin/pinentry",
-                          "--with-scdaemon-pgm=#{Formula['gnupg2'].opt_prefix}/libexec/scdaemon"
+                          "--with-pinentry-pgm=#{Formula["pinentry"].opt_bin}/pinentry",
+                          "--with-scdaemon-pgm=#{Formula["gnupg2"].opt_libexec}/scdaemon"
     system "make install"
   end
 end

@@ -8,8 +8,8 @@ class Dos2unix < Formula
   depends_on 'gettext'
 
   devel do
-    url 'http://waterlan.home.xs4all.nl/dos2unix/dos2unix-6.0.5-beta5.tar.gz'
-    sha1 'a15c440c0a3b4c7cbe987b7d42b2ceb764663718'
+    url 'http://waterlan.home.xs4all.nl/dos2unix/dos2unix-6.0.5-beta11.tar.gz'
+    sha1 'f7d17dc4dbf723c81d1459b9664fc8045a77541d'
   end
 
   def install
