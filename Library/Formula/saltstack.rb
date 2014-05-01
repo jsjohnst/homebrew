@@ -1,5 +1,8 @@
 require 'formula'
 
+# We use a custom download strategy to properly configure
+# salt's version information when built against HEAD.
+# This is populated from git information unfortunately.
 class SaltHeadDownloadStrategy < GitDownloadStrategy
   def stage
     @clone.cd {reset}
@@ -9,8 +12,8 @@ end
 
 class Saltstack < Formula
   homepage 'http://www.saltstack.org'
-  url 'https://github.com/saltstack/salt/archive/v2014.1.0.tar.gz'
-  sha1 'a576f4305551b081f90bf868b237577d9ed98ef6'
+  url 'https://github.com/saltstack/salt/archive/v2014.1.3.tar.gz'
+  sha256 'cc3e21c6cd333f2058a4f0c78db5103a07a7301f6237644b5eee6a55f9793e24'
 
   head 'https://github.com/saltstack/salt.git', :branch => 'develop',
     :using => SaltHeadDownloadStrategy, :shallow => false

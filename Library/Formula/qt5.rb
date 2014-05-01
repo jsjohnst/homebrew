@@ -16,11 +16,12 @@ class Qt5 < Formula
   homepage 'http://qt-project.org/'
   url 'http://download.qt-project.org/official_releases/qt/5.2/5.2.1/single/qt-everywhere-opensource-src-5.2.1.tar.gz'
   sha1 '31a5cf175bb94dbde3b52780d3be802cbeb19d65'
+
   bottle do
-    revision 1
-    sha1 "88f554a67bf9345c9e7abd980f7334f60b9c91cf" => :mavericks
-    sha1 "5d270c3d91bd729f3ddffcff5e201e7083914071" => :mountain_lion
-    sha1 "d2415a72aafb3ce24dc5812599fb7f7ff1f8cddd" => :lion
+    revision 2
+    sha1 "6a514fbf56491a64316ef05acdf07ca6526ba458" => :mavericks
+    sha1 "2518707b0ad69462a620fcd5c2e482053a239914" => :mountain_lion
+    sha1 "b2362eb20666b961d1d2acec629e4a581aa2b87a" => :lion
   end
 
   head 'git://gitorious.org/qt/qt5.git', :branch => 'stable',
@@ -95,21 +96,21 @@ class Qt5 < Formula
     end
 
     # Some config scripts will only find Qt in a "Frameworks" folder
-    cd prefix do
-      ln_s lib, frameworks
-    end
+    frameworks.install_symlink Dir["#{lib}/*.framework"]
 
     # The pkg-config files installed suggest that headers can be found in the
     # `include` directory. Make this so by creating symlinks from `include` to
     # the Frameworks' Headers folders.
-    Pathname.glob(lib + '*.framework/Headers').each do |path|
-      framework_name = File.basename(File.dirname(path), '.framework')
-      ln_s path.realpath, include+framework_name
+    Pathname.glob("#{lib}/*.framework/Headers") do |path|
+      include.install_symlink path => path.parent.basename(".framework")
     end
 
-    Pathname.glob(bin + '*.app').each do |path|
-      mv path, prefix
-    end
+    # configure saved the PKG_CONFIG_LIBDIR set up by superenv; remove it
+    # see: https://github.com/Homebrew/homebrew/issues/27184
+    inreplace prefix/"mkspecs/qconfig.pri", /\n\n# pkgconfig/, ""
+    inreplace prefix/"mkspecs/qconfig.pri", /\nPKG_CONFIG_.*=.*$/, ""
+
+    Pathname.glob("#{bin}/*.app") { |app| mv app, prefix }
   end
 
   test do

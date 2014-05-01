@@ -2,15 +2,15 @@ require 'formula'
 
 class AndroidSdk < Formula
   homepage 'http://developer.android.com/index.html'
-  url 'http://dl.google.com/android/android-sdk_r22.6-macosx.zip'
-  version '22.6'
-  sha1 'f1da847ba793b38a510f9c9c70ff4baa5eba1427'
+  url 'http://dl.google.com/android/android-sdk_r22.6.2-macosx.zip'
+  version '22.6.2'
+  sha1 '6abb9cf56529a40ac29fa70a95f5741fa1ae0f86'
 
   conflicts_with 'android-platform-tools',
     :because => "The Android Platform-Tools need to be installed as part of the SDK."
 
   resource 'completion' do
-    url 'https://raw.github.com/CyanogenMod/android_sdk/938c8d70af7d77dfcd1defe415c1e0deaa7d301b/bash_completion/adb.bash'
+    url 'https://raw.githubusercontent.com/CyanogenMod/android_sdk/938c8d70af7d77dfcd1defe415c1e0deaa7d301b/bash_completion/adb.bash'
     sha1 '6dfead9b1350dbe1c16a1c80ed70beedebfa39eb'
   end
 
@@ -35,10 +35,9 @@ class AndroidSdk < Formula
     # this is data that should be preserved across upgrades, but the Android
     # SDK isn't too smart, so we still have to symlink it back into its tree.
     %w[platforms samples temp add-ons sources system-images extras].each do |d|
-      dst = prefix/d
-      src = var/'lib/android-sdk'/d
-      src.mkpath unless src.directory?
-      dst.make_relative_symlink src
+      src = var/"lib/android-sdk"/d
+      src.mkpath
+      prefix.install_symlink src
     end
 
     %w[adb fastboot].each do |platform_tool|

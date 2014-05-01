@@ -12,14 +12,14 @@ end
 
 class Gpm < Formula
   homepage "https://github.com/pote/gpm"
-  url "https://github.com/pote/gpm/archive/v1.1.1.tar.gz"
-  sha1 "dfa0a633f28cdbc48a7ade593a7a5dfe8136cc2f"
+  url "https://github.com/pote/gpm/archive/v1.2.1.tar.gz"
+  sha1 "225eabbf7f2ec01e4c6e2cce57950ad3a1034c39"
 
   bottle do
     cellar :any
-    sha1 "be4a9a7e9a5e920d04c145e3fcb55580607a0f53" => :mavericks
-    sha1 "551c3f73f109eddf6fa1938cfa2fbe05088c0dad" => :mountain_lion
-    sha1 "433716c37294d5380affb56371d6677fe6e2e58b" => :lion
+    sha1 "623057df59619c9fb9fda82d85a5aed696c49bb2" => :mavericks
+    sha1 "ebbfe75b3aae977a55ba3de9df09bb8fa3b161b6" => :mountain_lion
+    sha1 "dc68290e961ccfb91cb688262be917dc55f728bc" => :lion
   end
 
   depends_on GoInstalled

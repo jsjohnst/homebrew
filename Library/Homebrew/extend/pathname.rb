@@ -83,7 +83,7 @@ class Pathname
     src = Pathname(src).expand_path(self)
     dst = join File.basename(new_basename)
     mkpath
-    FileUtils.ln_s src.relative_path_from(dst.parent), dst
+    FileUtils.ln_sf src.relative_path_from(dst.parent), dst
   end
   protected :install_symlink_p
 
@@ -98,6 +98,7 @@ class Pathname
   def atomic_write content
     require "tempfile"
     tf = Tempfile.new(basename.to_s)
+    tf.binmode
     tf.write(content)
     tf.close
 
@@ -109,8 +110,11 @@ class Pathname
 
     FileUtils.mv tf.path, self
 
+    uid = Process.uid
+    gid = Process.groups.delete(old_stat.gid) { Process.gid }
+
     begin
-      chown(old_stat.uid, old_stat.gid)
+      chown(uid, gid)
       chmod(old_stat.mode)
     rescue Errno::EPERM
     end
@@ -198,16 +202,17 @@ class Pathname
   end
 
   def compression_type
-    # Don't treat jars or wars as compressed
-    return nil if self.extname == '.jar'
-    return nil if self.extname == '.war'
-
-    # OS X installer package
-    return :pkg if self.extname == '.pkg'
-
-    # If the filename ends with .gz not preceded by .tar
-    # then we want to gunzip but not tar
-    return :gzip_only if self.extname == '.gz'
+    case extname
+    when ".jar", ".war"
+      # Don't treat jars or wars as compressed
+      return
+    when ".gz"
+      # If the filename ends with .gz not preceded by .tar
+      # then we want to gunzip but not tar
+      return :gzip_only
+    when ".bz2"
+      return :bzip2_only
+    end
 
     # Get enough of the file to detect common file types
     # POSIX tar magic has a 257 byte offset
@@ -222,6 +227,7 @@ class Pathname
     when /^LZIP/n               then :lzip
     when /^Rar!/n               then :rar
     when /^7z\xBC\xAF\x27\x1C/n then :p7zip
+    when /^xar!/n               then :xar
     else
       # This code so that bad-tarballs and zips produce good error messages
       # when they don't unarchive properly.
@@ -284,53 +290,9 @@ class Pathname
     (dirname+link).exist?
   end
 
-  # perhaps confusingly, this Pathname object becomes the symlink pointing to
-  # the src paramter.
-  def make_relative_symlink src
-    src = Pathname.new(src) unless src.kind_of? Pathname
-
-    self.dirname.mkpath
-    Dir.chdir self.dirname do
-      # NOTE only system ln -s will create RELATIVE symlinks
-      quiet_system 'ln', '-s', src.relative_path_from(self.dirname), self.basename
-      if not $?.success?
-        if self.exist?
-          raise <<-EOS.undent
-            Could not symlink file: #{src.expand_path}
-            Target #{self} already exists. You may need to delete it.
-            To force the link and overwrite all other conflicting files, do:
-              brew link --overwrite formula_name
-
-            To list all files that would be deleted:
-              brew link --overwrite --dry-run formula_name
-            EOS
-        # #exist? will return false for symlinks whose target doesn't exist
-        elsif self.symlink?
-          raise <<-EOS.undent
-            Could not symlink file: #{src.expand_path}
-            Target #{self} already exists as a symlink to #{readlink}.
-            If this file is from another formula, you may need to
-            `brew unlink` it. Otherwise, you may want to delete it.
-            To force the link and overwrite all other conflicting files, do:
-              brew link --overwrite formula_name
-
-            To list all files that would be deleted:
-              brew link --overwrite --dry-run formula_name
-            EOS
-        elsif !dirname.writable_real?
-          raise <<-EOS.undent
-            Could not symlink file: #{src.expand_path}
-            #{dirname} is not writable. You should change its permissions.
-            EOS
-        else
-          raise <<-EOS.undent
-            Could not symlink file: #{src.expand_path}
-            #{self} may already exist.
-            #{dirname} may not be writable.
-            EOS
-        end
-      end
-    end
+  def make_relative_symlink(src)
+    dirname.mkpath
+    File.symlink(src.relative_path_from(dirname), self)
   end
 
   def / that
@@ -349,24 +311,18 @@ class Pathname
   end
 
   def install_info
-    unless self.symlink?
-      raise "Cannot install info entry for unbrewed info file '#{self}'"
-    end
-    system '/usr/bin/install-info', '--quiet', self.to_s, (self.dirname+'dir').to_s
+    quiet_system "/usr/bin/install-info", "--quiet", to_s, "#{dirname}/dir"
   end
 
   def uninstall_info
-    unless self.symlink?
-      raise "Cannot uninstall info entry for unbrewed info file '#{self}'"
-    end
-    system '/usr/bin/install-info', '--delete', '--quiet', self.to_s, (self.dirname+'dir').to_s
+    quiet_system "/usr/bin/install-info", "--delete", "--quiet", to_s, "#{dirname}/dir"
   end
 
   def find_formula
     [self/:Formula, self/:HomebrewFormula, self].each do |d|
       if d.exist?
-        d.children.map{ |child| child.relative_path_from(self) }.each do |pn|
-          yield pn if pn.to_s =~ /.rb$/
+        d.children.each do |pn|
+          yield pn if pn.extname == ".rb"
         end
         break
       end
@@ -386,8 +342,6 @@ class Pathname
         #!/bin/bash
         exec "#{target}" "$@"
       EOS
-      # +x here so this will work during post-install as well
-      (self+target.basename()).chmod 0644
     end
   end
 
@@ -418,8 +372,6 @@ class Pathname
       #!/bin/bash
       exec java #{java_opts} -jar #{target_jar} "$@"
     EOS
-    # +x here so this will work during post-install as well
-    (self+script_name).chmod 0644
   end
 
   def install_metafiles from=nil
@@ -507,6 +459,7 @@ module ObserverPathnameExtension
   end
   def make_relative_symlink src
     super
+    puts "ln -s #{src.relative_path_from(dirname)} #{basename}" if ARGV.verbose?
     ObserverPathnameExtension.n += 1
   end
   def install_info

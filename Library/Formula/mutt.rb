@@ -3,13 +3,14 @@ require 'formula'
 class Mutt < Formula
   homepage 'http://www.mutt.org/'
   url 'ftp://ftp.mutt.org/mutt/mutt-1.5.23.tar.gz'
-  mirror 'https://bitbucket.org/mutt/mutt/downloads/mutt-1.5.23.tar.gz'
+  mirror 'http://fossies.org/linux/misc/mutt-1.5.23.tar.gz'
   sha1 '8ac821d8b1e25504a31bf5fda9c08d93a4acc862'
+  revision 1
 
   bottle do
-    sha1 "18da37536ab216267e5240e79acab0eb550076d9" => :mavericks
-    sha1 "dabafeb01c0ad9669c13302c2898f4fee85a7cd4" => :mountain_lion
-    sha1 "0808c458478a316031e71ecb6c3d54e99b41781a" => :lion
+    sha1 "0b5b7346ec5450821d9416151426917aba099c5e" => :mavericks
+    sha1 "13e20a8a78933a64ba857ad3734ac45d421bd7e2" => :mountain_lion
+    sha1 "2772138cb1e6b63d0e0095790261fa6c2bad1068" => :lion
   end
 
   head do
@@ -51,7 +52,7 @@ class Mutt < Formula
   # original source for this went missing, patch sourced from Arch at
   # https://aur.archlinux.org/packages/mutt-ignore-thread/
   patch do
-    url "https://gist.github.com/mistydemeo/5522742/raw/1439cc157ab673dc8061784829eea267cd736624/ignore-thread-1.5.21.patch"
+    url "https://gist.githubusercontent.com/mistydemeo/5522742/raw/1439cc157ab673dc8061784829eea267cd736624/ignore-thread-1.5.21.patch"
     sha1 "dbcf5de46a559bca425028a18da0a63d34f722d3"
   end if build.with? "ignore-thread-patch"
 
@@ -61,7 +62,7 @@ class Mutt < Formula
   end if build.with? "pgp-verbose-mime-patch"
 
   patch do
-    url "https://gist.github.com/tlvince/5741641/raw/c926ca307dc97727c2bd88a84dcb0d7ac3bb4bf5/mutt-attach.patch"
+    url "https://gist.githubusercontent.com/tlvince/5741641/raw/c926ca307dc97727c2bd88a84dcb0d7ac3bb4bf5/mutt-attach.patch"
     sha1 "94da52d50508d8951aa78ca4b073023414866be1"
   end if build.with? "confirm-attachment-patch"
 

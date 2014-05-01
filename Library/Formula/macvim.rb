@@ -3,9 +3,9 @@ require 'formula'
 # Reference: https://github.com/b4winckler/macvim/wiki/building
 class Macvim < Formula
   homepage 'http://code.google.com/p/macvim/'
-  url 'https://github.com/b4winckler/macvim/archive/snapshot-72.tar.gz'
-  version '7.4-72'
-  sha1 '3fb5b09d7496c8031a40e7a73374424ef6c81166'
+  url 'https://github.com/b4winckler/macvim/archive/snapshot-73.tar.gz'
+  version '7.4-73'
+  sha1 'b87e37fecb305a99bc268becca39f8854e3ff9f0'
 
   head 'https://github.com/b4winckler/macvim.git', :branch => 'master'
 
@@ -136,7 +136,7 @@ class Macvim < Formula
     # Create MacVim vimdiff, view, ex equivalents
     executables = %w[mvimdiff mview mvimex gvim gvimdiff gview gvimex]
     executables += %w[vi vim vimdiff view vimex] if build.include? "override-system-vim"
-    executables.each {|f| ln_s bin+'mvim', bin+f}
+    executables.each { |e| bin.install_symlink "mvim" => e }
   end
 
   def caveats

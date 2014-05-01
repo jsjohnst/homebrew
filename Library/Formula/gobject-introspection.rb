@@ -2,13 +2,13 @@ require 'formula'
 
 class GobjectIntrospection < Formula
   homepage 'http://live.gnome.org/GObjectIntrospection'
-  url 'http://ftp.gnome.org/pub/GNOME/sources/gobject-introspection/1.38/gobject-introspection-1.38.0.tar.xz'
-  sha256 '3575e5d353c17a567fdf7ffaaa7aebe9347b5b0eee8e69d612ba56a9def67d73'
+  url 'http://ftp.gnome.org/pub/GNOME/sources/gobject-introspection/1.40/gobject-introspection-1.40.0.tar.xz'
+  sha256 '96ea75e9679083e7fe39a105e810e2ead2d708abf189a5ba420bfccfffa24e98'
 
   bottle do
-    sha1 "08dcb543c8b7f2c8fc112278db752159edb420ba" => :mavericks
-    sha1 "a65b28dde0014e5cf622657ac913e6ad5fd29709" => :mountain_lion
-    sha1 "2adfc7d361663cd40780b19cccebfb275a180791" => :lion
+    sha1 "dbd65331012abd0570bfb8b115870a4ece51aad7" => :mavericks
+    sha1 "e553b3f537e998ef50ca42f1224aa981558ee29d" => :mountain_lion
+    sha1 "bb2353a61e8a05d4ef3e2a9f113d8ff348106e79" => :lion
   end
 
   option :universal
@@ -23,7 +23,7 @@ class GobjectIntrospection < Formula
 
   # Allow tests to execute on OS X (.so => .dylib)
   patch do
-    url "https://gist.github.com/krrk/6958869/raw/de8d83009d58eefa680a590f5839e61a6e76ff76/gobject-introspection-tests.patch"
+    url "https://gist.githubusercontent.com/krrk/6958869/raw/de8d83009d58eefa680a590f5839e61a6e76ff76/gobject-introspection-tests.patch"
     sha1 "1f57849db76cd2ca26ddb35dc36c373606414dfc"
   end if build.with? "tests"
 
