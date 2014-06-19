@@ -14,6 +14,19 @@ module SharedEnvExtension
                           'llvm-gcc' => :llvm,
                           'clang'    => :clang }
 
+  SANITIZED_VARS = %w[
+    CDPATH GREP_OPTIONS CLICOLOR_FORCE
+    CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH OBJC_INCLUDE_PATH
+    CC CXX OBJC OBJCXX CPP MAKE LD LDSHARED
+    CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS LDFLAGS CPPFLAGS
+    MACOSX_DEPLOYMENT_TARGET SDKROOT DEVELOPER_DIR
+    CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_FRAMEWORK_PATH
+  ]
+
+  def reset
+    SANITIZED_VARS.each { |k| delete(k) }
+  end
+
   def remove_cc_etc
     keys = %w{CC CXX OBJC OBJCXX LD CPP CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS LDFLAGS CPPFLAGS}
     removed = Hash[*keys.map{ |key| [key, self[key]] }.flatten]
@@ -71,14 +84,6 @@ module SharedEnvExtension
     end if value
   end
 
-  def cc= val
-    self['CC'] = self['OBJC'] = val.to_s
-  end
-
-  def cxx= val
-    self['CXX'] = self['OBJCXX'] = val.to_s
-  end
-
   def cc;       self['CC'];           end
   def cxx;      self['CXX'];          end
   def cflags;   self['CFLAGS'];       end
@@ -92,25 +97,15 @@ module SharedEnvExtension
   def compiler
     @compiler ||= if (cc = ARGV.cc)
       COMPILER_SYMBOL_MAP.fetch(cc) do |other|
-        if other =~ GNU_GCC_REGEXP then other
+        case other
+        when GNU_GCC_REGEXP
+          other
         else
           raise "Invalid value for --cc: #{other}"
         end
       end
-    elsif ARGV.include? '--use-gcc'
-      gcc_installed = Formula.factory('apple-gcc42').installed? rescue false
-      # fall back to something else on systems without Apple gcc
-      if MacOS.locate('gcc-4.2') || gcc_installed
-        :gcc
-      else
-        raise "gcc-4.2 not found!"
-      end
-    elsif ARGV.include? '--use-llvm'
-      :llvm
-    elsif ARGV.include? '--use-clang'
-      :clang
-    elsif self['HOMEBREW_CC']
-      cc = COMPILER_ALIASES.fetch(self['HOMEBREW_CC'], self['HOMEBREW_CC'])
+    elsif homebrew_cc
+      cc = COMPILER_ALIASES.fetch(homebrew_cc, homebrew_cc)
       COMPILER_SYMBOL_MAP.fetch(cc) { MacOS.default_compiler }
     else
       MacOS.default_compiler
@@ -121,7 +116,7 @@ module SharedEnvExtension
   # an alternate compiler, altering the value of environment variables.
   # If no valid compiler is found, raises an exception.
   def validate_cc!(formula)
-    if formula.fails_with? ENV.compiler
+    if formula.fails_with? compiler
       send CompilerSelector.new(formula).compiler
     end
   end
@@ -186,24 +181,30 @@ module SharedEnvExtension
   end
 
   def gcc_version_formula(version)
-    gcc_formula = Formulary.factory("gcc")
-    gcc_name = 'gcc' + version.delete('.')
+    gcc_name = "gcc-#{version}"
+    gcc_version_name = "gcc#{version.delete('.')}"
 
-    if gcc_formula.opt_prefix.exist?
-      return gcc_formula
-    end
+    ivar = "@#{gcc_version_name}_version"
+    return instance_variable_get(ivar) if instance_variable_defined?(ivar)
 
-    gcc_versions_formula = Formulary.factory(gcc_name) rescue nil
+    gcc_path = HOMEBREW_PREFIX.join "opt/gcc/bin/#{gcc_name}"
+    gcc_formula = Formulary.factory "gcc"
+    gcc_versions_path = \
+      HOMEBREW_PREFIX.join "opt/#{gcc_version_name}/bin/#{gcc_name}"
 
-    if gcc_versions_formula && gcc_versions_formula.opt_prefix.exist?
-      gcc_versions_formula
+    formula = if gcc_path.exist?
+      gcc_formula
+    elsif gcc_versions_path.exist?
+      Formulary.factory gcc_version_name
     elsif gcc_formula.version.to_s.include?(version)
       gcc_formula
-    elsif gcc_versions_formula
+    elsif (gcc_versions_formula = Formulary.factory(gcc_version_name) rescue nil)
       gcc_versions_formula
     else
-      Formulary.factory(gcc_name)
+      gcc_formula
     end
+
+    instance_variable_set(ivar, formula)
   end
 
   def warn_about_non_apple_gcc(gcc)
@@ -234,5 +235,21 @@ module SharedEnvExtension
       You may need to: brew tap homebrew/versions
       EOS
     end
+  end
+
+  def permit_arch_flags; end
+
+  private
+
+  def cc= val
+    self["CC"] = self["OBJC"] = val.to_s
+  end
+
+  def cxx= val
+    self["CXX"] = self["OBJCXX"] = val.to_s
+  end
+
+  def homebrew_cc
+    self["HOMEBREW_CC"]
   end
 end

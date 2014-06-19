@@ -70,13 +70,13 @@ class Emacs < Formula
   def do_not_install_ctags
     unless build.include? "keep-ctags"
       (bin/"ctags").unlink
-      (share/man/man1/"ctags.1.gz").unlink
+      (man1/"ctags.1.gz").unlink
     end
   end
 
   def install
     # HEAD builds blow up when built in parallel as of April 20 2012
-    ENV.j1 if build.head?
+    ENV.deparallelize if build.head?
 
     args = ["--prefix=#{prefix}",
             "--without-dbus",

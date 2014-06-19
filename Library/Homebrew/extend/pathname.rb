@@ -88,6 +88,7 @@ class Pathname
   protected :install_symlink_p
 
   # we assume this pathname object is a file obviously
+  alias_method :old_write, :write if method_defined?(:write)
   def write content
     raise "Will not overwrite #{to_s}" if exist?
     dirname.mkpath
@@ -296,8 +297,8 @@ class Pathname
   end
 
   def / that
-    join that.to_s
-  end
+    self + that.to_s
+  end unless method_defined?(:/)
 
   def ensure_writable
     saved_perms = nil
@@ -358,8 +359,7 @@ class Pathname
   # Writes a wrapper env script and moves all files to the dst
   def env_script_all_files dst, env
     dst.mkpath
-    Dir["#{self}/*"].each do |file|
-      file = Pathname.new(file)
+    Pathname.glob("#{self}/*") do |file|
       dst.install_p file
       new_file = dst+file.basename
       file.write_env_script(new_file, env)

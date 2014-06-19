@@ -570,7 +570,9 @@ class GitDownloadStrategy < VCSDownloadStrategy
   end
 
   def update_repo
-    unless @ref_type == :tag && has_ref?
+    # Branches always need updated. The has_ref? check will only work if a ref
+    # has been specified; if there isn't one we always want an update.
+    if @ref_type == :branch || !@ref || !has_ref?
       quiet_safe_system 'git', 'fetch', 'origin'
     end
   end
@@ -651,14 +653,6 @@ class CVSDownloadStrategy < VCSDownloadStrategy
 
   def stage
     FileUtils.cp_r Dir[@clone+"{.}"], Dir.pwd
-
-    require 'find'
-    Find.find(Dir.pwd) do |path|
-      if FileTest.directory?(path) && File.basename(path) == "CVS"
-        Find.prune
-        FileUtil.rm_r path, :force => true
-      end
-    end
   end
 
   private
@@ -760,7 +754,7 @@ class BazaarDownloadStrategy < VCSDownloadStrategy
     # FIXME: The export command doesn't work on checkouts
     # See https://bugs.launchpad.net/bzr/+bug/897511
     FileUtils.cp_r Dir[@clone+"{.}"], Dir.pwd
-    FileUtils.rm_r Dir[Dir.pwd+"/.bzr"]
+    FileUtils.rm_r ".bzr"
   end
 end
 
