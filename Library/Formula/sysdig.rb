@@ -2,10 +2,16 @@ require "formula"
 
 class Sysdig < Formula
   homepage "http://www.sysdig.org/"
-  url "https://github.com/draios/sysdig/archive/0.1.82.tar.gz"
-  sha1 "bf63f1cf7833279794b78fc6297c77bff796653b"
+  url "https://github.com/draios/sysdig/archive/0.1.86.tar.gz"
+  sha1 "1e54efe7916987337b34029e867bd6c78a763c5b"
 
   head "https://github.com/draios/sysdig.git", :branch => "master"
+
+  bottle do
+    sha1 "d237be41f81c3a725a0b0eb2d1a49f9e72d46a89" => :mavericks
+    sha1 "fcd68508a7edf0fc00a87cc73d9da93cc40de8f6" => :mountain_lion
+    sha1 "3736f34b85fa9a1ae9937bfb6daab2935c12cca9" => :lion
+  end
 
   depends_on "cmake" => :build
 
@@ -19,7 +25,7 @@ class Sysdig < Formula
     ENV.libcxx if MacOS.version < :mavericks
 
     mkdir "build" do
-      system "cmake", "..", *std_cmake_args
+      system "cmake", "..", "-DSYSDIG_VERSION=#{version}", *std_cmake_args
       system "make", "install"
     end
   end

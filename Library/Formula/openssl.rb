@@ -2,17 +2,19 @@ require 'formula'
 
 class Openssl < Formula
   homepage 'http://openssl.org'
-  url 'https://www.openssl.org/source/openssl-1.0.1g.tar.gz'
-  mirror 'http://mirrors.ibiblio.org/openssl/source/openssl-1.0.1g.tar.gz'
-  sha256 '53cb818c3b90e507a8348f4f5eaedb05d8bfe5358aabb508b7263cc670c3e028'
+  url 'https://www.openssl.org/source/openssl-1.0.1h.tar.gz'
+  mirror 'http://mirrors.ibiblio.org/openssl/source/openssl-1.0.1h.tar.gz'
+  sha256 '9d1c8a9836aa63e2c6adb684186cbd4371c9e9dcc01d6e3bb447abf2d4d3d093'
 
   bottle do
-    sha1 "d8c38bb2fe4dfd8930ea02f87d4b958a2a33b051" => :mavericks
-    sha1 "536d1e6bd5e1321eb603b4ed1ad131ea86a2794c" => :mountain_lion
-    sha1 "f12f352e67e5b131c1935040f8d2ca24107ebfca" => :lion
+    revision 1
+    sha1 "0b776dc04ed4fcc5398c073b0de75aea22935229" => :mavericks
+    sha1 "3cdffa0876d8cb93e78d5b397a217b1815ae5abf" => :mountain_lion
+    sha1 "017742db0d6daf60936acebeda63daf99c32160d" => :lion
   end
 
   option :universal
+  option "without-check", "Skip build-time tests (not recommended)"
 
   depends_on "makedepend" => :build
 
@@ -21,7 +23,7 @@ class Openssl < Formula
 
   def arch_args
     {
-      :x86_64 => %w[darwin64-x86_64-cc enable-ec_nistp-64_gcc_128],
+      :x86_64 => %w[darwin64-x86_64-cc enable-ec_nistp_64_gcc_128],
       :i386   => %w[darwin-i386-cc],
     }
   end
@@ -60,7 +62,7 @@ class Openssl < Formula
       system "perl", "./Configure", *(configure_args + arch_args[arch])
       system "make", "depend"
       system "make"
-      system "make", "test"
+      system "make", "test" if build.with? "check"
 
       if build.universal?
         cp Dir["*.?.?.?.dylib", "*.a", "apps/openssl"], dir

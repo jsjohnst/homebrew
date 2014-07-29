@@ -3,21 +3,21 @@ require 'formula'
 class X264 < Formula
   homepage "http://www.videolan.org/developers/x264.html"
   # the latest commit on the stable branch
-  url "http://git.videolan.org/git/x264.git", :revision => "e260ea549226ae29832d8bc0dcfd20cffc8cf248"
-  version "r2412"
+  url "http://git.videolan.org/git/x264.git", :revision => "af8e768e2bd3b4398bca033998f83b0eb8874914"
+  version "r2438"
   head "http://git.videolan.org/git/x264.git"
 
   devel do
     # the latest commit on the master branch
-    url "http://git.videolan.org/git/x264.git", :revision => "ac7644073ac28d19c9cf048849bbcd515713e426"
-    version "r2431"
+    url "http://git.videolan.org/git/x264.git", :revision => "ea0ca51e94323318b95bd8b27b7f9438cdcf4d9e"
+    version "r2453"
   end
 
   bottle do
     cellar :any
-    sha1 "28d8418f2a774f057106ba67076060a45bfead9a" => :mavericks
-    sha1 "001bb62c41554f3a6479ffc6dcd6625da17f2ea4" => :mountain_lion
-    sha1 "326cb8fc003ed0c17f07e2f5a31d2a72f1d399cf" => :lion
+    sha1 "0b2fa975debb45329503a2efb19f1c4165c59dc8" => :mavericks
+    sha1 "54254a3266048daf5f7081c5c0531a33cc173a47" => :mountain_lion
+    sha1 "6e5fb8f851796c81a235b18cf88a23d08d743603" => :lion
   end
 
   depends_on 'yasm' => :build

@@ -3,13 +3,13 @@ require "formula"
 class Python < Formula
   homepage "http://www.python.org"
   head "http://hg.python.org/cpython", :using => :hg, :branch => "2.7"
-  url "http://www.python.org/ftp/python/2.7.7/Python-2.7.7.tgz"
-  sha1 "1db01d7f325d8ceaf986976800106018b82ae45a"
+  url "http://www.python.org/ftp/python/2.7.8/Python-2.7.8.tgz"
+  sha1 "511960dd78451a06c9df76509635aeec05b2051a"
 
   bottle do
-    sha1 "4a9f0e366ec4fd69aa36cd7fa156a26b16ebfaf2" => :mavericks
-    sha1 "542b53cdf6c756d740d8b87b0ca329b35c912755" => :mountain_lion
-    sha1 "7b7d5cc528403151bb6d84042f2b16b1c22e05e2" => :lion
+    sha1 "11c4ad33f1a0ec2a9dee025f246e67a0783e8bdb" => :mavericks
+    sha1 "522a99761335205b29f348dd9861dc6630a29a35" => :mountain_lion
+    sha1 "07ba7ee28c2d6a6d8fcc613b27574090f0e2f27e" => :lion
   end
 
   option :universal
@@ -30,8 +30,8 @@ class Python < Formula
   skip_clean "bin/easy_install", "bin/easy_install-2.7"
 
   resource "setuptools" do
-    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-4.0.tar.gz"
-    sha1 "ff9212d50573ea9983d81d53bd11e834cf863b25"
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-5.3.tar.gz"
+    sha1 "da2da9324a539029ebea602120afcb8cfd24ddf6"
   end
 
   resource "pip" do
@@ -54,6 +54,12 @@ class Python < Formula
   # The HOMEBREW_PREFIX location of site-packages.
   def site_packages
     HOMEBREW_PREFIX/"lib/python2.7/site-packages"
+  end
+
+  # setuptools remembers the build flags python is built with and uses them to
+  # build packages later. Xcode-only systems need different flags.
+  def pour_bottle?
+    MacOS::CLT.installed?
   end
 
   def install

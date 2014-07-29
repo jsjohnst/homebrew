@@ -2,9 +2,9 @@ require 'resource'
 require 'stringio'
 require 'erb'
 
-class Patch
-  def self.create(strip, io=nil, &block)
-    case strip ||= :p1
+module Patch
+  def self.create(strip, io, &block)
+    case strip
     when :DATA, IO, StringIO
       IOPatch.new(strip, :p1)
     when String
@@ -29,7 +29,7 @@ class Patch
     case list
     when Hash
       list
-    when Array, String, IO, StringIO
+    when Array, String, IO
       { :p1 => list }
     else
       {}
@@ -37,7 +37,7 @@ class Patch
       urls = [urls] unless Array === urls
       urls.each do |url|
         case url
-        when IO, StringIO
+        when IO
           patch = IOPatch.new(url, strip)
         else
           patch = LegacyPatch.new(strip, url)
@@ -48,22 +48,19 @@ class Patch
 
     patches
   end
-
-  attr_reader :whence
-
-  def external?
-    whence == :resource
-  end
 end
 
-class IOPatch < Patch
+class IOPatch
   attr_writer :owner
   attr_reader :strip
+
+  def external?
+    false
+  end
 
   def initialize(io, strip)
     @io     = io
     @strip  = strip
-    @whence = :io
   end
 
   def apply
@@ -79,17 +76,20 @@ class IOPatch < Patch
   end
 
   def inspect
-    "#<#{self.class}: #{strip.inspect}>"
+    "#<#{self.class.name}: #{strip.inspect}>"
   end
 end
 
-class ExternalPatch < Patch
+class ExternalPatch
   attr_reader :resource, :strip
 
   def initialize(strip, &block)
     @strip    = strip
     @resource = Resource.new("patch", &block)
-    @whence   = :resource
+  end
+
+  def external?
+    true
   end
 
   def owner= owner
@@ -127,7 +127,7 @@ class ExternalPatch < Patch
   end
 
   def inspect
-    "#<#{self.class}: #{strip.inspect} #{url.inspect}>"
+    "#<#{self.class.name}: #{strip.inspect} #{url.inspect}>"
   end
 end
 

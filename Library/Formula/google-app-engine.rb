@@ -1,13 +1,13 @@
-require 'formula'
+require "formula"
 
 class GoogleAppEngine < Formula
-  homepage 'https://developers.google.com/appengine/'
-  url 'https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.5.zip'
-  sha1 '070ba616fbeecff4bf6c5f43c00a43c21fbb108e'
+  homepage "https://developers.google.com/appengine/"
+  url "https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.7.zip"
+  sha1 "f68fb5f0894912307d164ce66f199f836d9b6acd"
 
   def install
-    cd '..'
-    share.install 'google_appengine' => name
+    cd ".."
+    share.install "google_appengine" => name
     %w[
       _python_runtime.py
       _php_runtime.py
